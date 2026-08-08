@@ -5,7 +5,8 @@ import androidx.compose.ui.graphics.toArgb
 
 enum class ClockStyle { DIGITAL, ANALOG }
 enum class UnitSystem { METRIC, IMPERIAL }
-enum class AppFont { SYSTEM, JETBRAINS_MONO, SOURCE_CODE_PRO }
+enum class AppFont { SYSTEM, NOTO_SANS_SC, JETBRAINS_MONO, SOURCE_CODE_PRO }
+enum class DashboardTheme { ICE_BLUE, TRACK_ORANGE, ALERT_RED, AURORA_GREEN, NEON_PURPLE }
 enum class DayNightMode { DARK, LIGHT, AUTO, SYSTEM }
 enum class SidebarPosition { LEFT, RIGHT, BOTTOM }
 enum class GradientDirection { TOP_TO_BOTTOM, LEFT_TO_RIGHT, DIAGONAL, RADIAL }
@@ -64,7 +65,8 @@ data class WidgetConfig(
 
 data class AppSettings(
     val vehicleName: String = "我的爱车",
-    val accentColor: Int = Color.White.toArgb(),
+    val accentColor: Int = Color(0xFF61DAFB).toArgb(),
+    val dashboardTheme: DashboardTheme = DashboardTheme.ICE_BLUE,
     val backgroundColor: Int = Color.Black.toArgb(),
     val fontColor: Int = Color.White.toArgb(),
     val wallpaperUri: String = "",
@@ -73,7 +75,7 @@ data class AppSettings(
     val uiScale: Float = 1.0f,
     val clockStyle: ClockStyle = ClockStyle.DIGITAL,
     val unitSystem: UnitSystem = UnitSystem.METRIC,
-    val appFont: AppFont = AppFont.JETBRAINS_MONO,
+    val appFont: AppFont = AppFont.NOTO_SANS_SC,
     val showWeather: Boolean = true,
     val showClock: Boolean = true,
     val showTelemetry: Boolean = true,

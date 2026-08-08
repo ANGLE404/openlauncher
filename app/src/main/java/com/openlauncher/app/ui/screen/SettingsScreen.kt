@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.openlauncher.app.data.AppFont
 import com.openlauncher.app.data.AppSettings
+import com.openlauncher.app.data.DashboardTheme
 import com.openlauncher.app.data.DayNightMode
 import com.openlauncher.app.data.SidebarPosition
 import com.openlauncher.app.data.ShortcutConfig
@@ -490,6 +491,41 @@ fun SettingsScreen(
                         ) {
                             Text("DEFAULT", color = accent, fontSize = 9.sp, letterSpacing = 1.sp)
                         }
+                    }
+                }
+            }
+
+            SettingsDivider()
+
+            SettingsRow(
+                label = "主题预设",
+                sublabel = when (settings.dashboardTheme) {
+                    DashboardTheme.ICE_BLUE -> "冰蓝科技"
+                    DashboardTheme.TRACK_ORANGE -> "赛道橙"
+                    DashboardTheme.ALERT_RED -> "警示红"
+                    DashboardTheme.AURORA_GREEN -> "极光绿"
+                    DashboardTheme.NEON_PURPLE -> "紫色霓虹"
+                },
+                icon = Icons.Default.AutoAwesome
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DashboardTheme.entries.forEach { theme ->
+                        val color = when (theme) {
+                            DashboardTheme.ICE_BLUE -> Color(0xFF61DAFB)
+                            DashboardTheme.TRACK_ORANGE -> Color(0xFFFF9F43)
+                            DashboardTheme.ALERT_RED -> Color(0xFFFF5C70)
+                            DashboardTheme.AURORA_GREEN -> Color(0xFF46E6A5)
+                            DashboardTheme.NEON_PURPLE -> Color(0xFFB58CFF)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(if (settings.dashboardTheme == theme) 34.dp else 28.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(color)
+                                .clickable {
+                                    onUpdate { copy(dashboardTheme = theme, accentColor = color.toArgb()) }
+                                }
+                        )
                     }
                 }
             }
@@ -981,6 +1017,7 @@ private fun sliderColors(accent: Color): androidx.compose.material3.SliderColors
 
 private fun fontDisplayName(font: AppFont): String = when (font) {
     AppFont.SYSTEM          -> "System"
+    AppFont.NOTO_SANS_SC    -> "Noto Sans SC"
     AppFont.JETBRAINS_MONO  -> "JetBrains Mono"
     AppFont.SOURCE_CODE_PRO -> "Source Code Pro"
 }

@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -26,6 +29,11 @@ fun TelemetryWidget(
     isDayMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val smoothBearing by animateFloatAsState(
+        targetValue = bearing,
+        animationSpec = tween(420),
+        label = "compass_smoothing"
+    )
     val contentColor = if (isDayMode) Color(0xFF111111) else MaterialTheme.colorScheme.onBackground
     val subColor     = if (isDayMode) Color(0xFF888888) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
     val ringColor    = if (isDayMode) Color(0xFFCCCCCC) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f)
@@ -56,7 +64,7 @@ fun TelemetryWidget(
                 Canvas(
                     modifier = Modifier
                         .fillMaxSize()
-                        .graphicsLayer { rotationZ = -bearing }
+                        .graphicsLayer { rotationZ = -smoothBearing }
                 ) {
                     val cx = size.width  / 2f
                     val cy = size.height / 2f
@@ -74,7 +82,7 @@ fun TelemetryWidget(
                 Box(
                     modifier         = Modifier
                         .fillMaxSize()
-                        .graphicsLayer { rotationZ = -bearing },
+                        .graphicsLayer { rotationZ = -smoothBearing },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(

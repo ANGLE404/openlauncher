@@ -27,6 +27,7 @@ import com.openlauncher.app.model.NavDestination
 import com.openlauncher.app.ui.components.Sidebar
 import com.openlauncher.app.ui.screen.*
 import com.openlauncher.app.ui.theme.OpenLauncherTheme
+import com.openlauncher.app.ui.theme.palette
 import com.openlauncher.app.viewmodel.LauncherViewModel
 
 class MainActivity : ComponentActivity() {
@@ -78,11 +79,12 @@ class MainActivity : ComponentActivity() {
             val pickerSlot      by vm.shortcutPickerSlot.collectAsStateWithLifecycle()
             val appPickerTarget by vm.appPickerTarget.collectAsStateWithLifecycle()
 
+            val themePalette   = settings.dashboardTheme.palette()
             val accent         = Color(settings.accentColor)
             val bg             = if (settings.useCustomBackgroundColor) {
                 Color(settings.backgroundColor)
             } else {
-                if (isDayMode) Color(0xFFEEEEEE) else Color.Black
+                if (isDayMode) Color(0xFFEEEEEE) else themePalette.surface
             }
             val textColor      = if (isDayMode) Color(0xFF111111) else Color(settings.fontColor)
             val bgGradientEnd  = Color(settings.gradientEndColor)
@@ -141,7 +143,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         val isBottomBar    = settings.sidebarPosition == SidebarPosition.BOTTOM
-                        val layoutDivColor = if (isDayMode) Color(0xFFCCCCCC) else Color(0xFF1A1A1A)
+                        val layoutDivColor = if (isDayMode) Color(0xFFCCCCCC) else themePalette.glow.copy(alpha = 0.22f)
 
                         val sidebarContent: @Composable () -> Unit = {
                             val sidebarDensity = Density(

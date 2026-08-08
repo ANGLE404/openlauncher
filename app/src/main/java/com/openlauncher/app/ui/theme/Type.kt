@@ -24,8 +24,15 @@ val SourceCodePro = FontFamily(
     Font(R.font.source_code_pro_bold,    FontWeight.Bold),
 )
 
+val NotoSansSC = FontFamily(
+    Font(R.font.noto_sans_sc_regular, FontWeight.Normal),
+    Font(R.font.noto_sans_sc_medium, FontWeight.Medium),
+    Font(R.font.noto_sans_sc_bold, FontWeight.Bold),
+)
+
 fun AppFont.toFontFamily(): FontFamily = when (this) {
     AppFont.SYSTEM          -> FontFamily.Default
+    AppFont.NOTO_SANS_SC    -> NotoSansSC
     AppFont.JETBRAINS_MONO  -> JetBrainsMono
     AppFont.SOURCE_CODE_PRO -> SourceCodePro
 }

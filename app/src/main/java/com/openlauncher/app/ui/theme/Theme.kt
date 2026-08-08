@@ -5,7 +5,10 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import com.openlauncher.app.data.AppFont
@@ -19,20 +22,21 @@ fun OpenLauncherTheme(
     textColor: Color  = Color.White,
     fontBold: Boolean = false,
     textScale: Float  = 1.0f,
-    appFont: AppFont  = AppFont.JETBRAINS_MONO,
+    appFont: AppFont  = AppFont.NOTO_SANS_SC,
     isDayMode: Boolean = false,
     useCustomBg: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    val animatedAccent by animateColorAsState(accent, animationSpec = tween(420), label = "accent_transition")
     // Contrast-aware: the accent is user-chosen and can be any brightness,
     // so a fixed onPrimary (white) goes invisible on light accents
-    val onAccent = if (accent.luminance() > 0.5f) Color.Black else Color.White
+    val onAccent = if (animatedAccent.luminance() > 0.5f) Color.Black else Color.White
     val colorScheme = if (isDayMode) lightColorScheme(
-        primary          = accent,
+        primary          = animatedAccent,
         onPrimary        = onAccent,
-        secondary        = accent.copy(alpha = 0.7f),
+        secondary        = animatedAccent.copy(alpha = 0.7f),
         onSecondary      = onAccent,
-        tertiary         = accent.copy(alpha = 0.5f),
+        tertiary         = animatedAccent.copy(alpha = 0.5f),
         background       = if (useCustomBg) background else Color(0xFFEEEEEE),
         surface          = Color(0xFFFFFFFF),
         onBackground     = Color(0xFF111111),
@@ -41,11 +45,11 @@ fun OpenLauncherTheme(
         onSurfaceVariant = Color(0xFF666666),
         outline          = Color(0xFFCCCCCC)
     ) else darkColorScheme(
-        primary          = accent,
+        primary          = animatedAccent,
         onPrimary        = onAccent,
-        secondary        = accent.copy(alpha = 0.7f),
+        secondary        = animatedAccent.copy(alpha = 0.7f),
         onSecondary      = onAccent,
-        tertiary         = accent.copy(alpha = 0.5f),
+        tertiary         = animatedAccent.copy(alpha = 0.5f),
         background       = background,
         surface          = CardSurface,
         onBackground     = textColor,

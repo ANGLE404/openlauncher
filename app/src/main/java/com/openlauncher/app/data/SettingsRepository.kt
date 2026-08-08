@@ -20,6 +20,7 @@ class SettingsRepository(private val context: Context) {
     private object Keys {
         val VEHICLE_NAME       = stringPreferencesKey("vehicle_name")
         val ACCENT_COLOR       = intPreferencesKey("accent_color")
+        val DASHBOARD_THEME    = stringPreferencesKey("dashboard_theme")
         val BG_COLOR           = intPreferencesKey("bg_color")
         val FONT_COLOR         = intPreferencesKey("font_color")
         val WALLPAPER_URI      = stringPreferencesKey("wallpaper_uri")
@@ -92,6 +93,7 @@ class SettingsRepository(private val context: Context) {
             return AppSettings(
                 vehicleName    = prefs[Keys.VEHICLE_NAME]     ?: defaults.vehicleName,
                 accentColor    = prefs[Keys.ACCENT_COLOR]     ?: defaults.accentColor,
+                dashboardTheme = prefs[Keys.DASHBOARD_THEME]?.let { runCatching { DashboardTheme.valueOf(it) }.getOrNull() } ?: defaults.dashboardTheme,
                 backgroundColor = prefs[Keys.BG_COLOR]        ?: defaults.backgroundColor,
                 fontColor      = prefs[Keys.FONT_COLOR]       ?: defaults.fontColor,
                 wallpaperUri   = prefs[Keys.WALLPAPER_URI]    ?: defaults.wallpaperUri,
@@ -153,6 +155,7 @@ class SettingsRepository(private val context: Context) {
     private fun writeSettings(prefs: MutablePreferences, s: AppSettings) {
             prefs[Keys.VEHICLE_NAME]       = s.vehicleName
             prefs[Keys.ACCENT_COLOR]       = s.accentColor
+            prefs[Keys.DASHBOARD_THEME]    = s.dashboardTheme.name
             prefs[Keys.BG_COLOR]           = s.backgroundColor
             prefs[Keys.FONT_COLOR]         = s.fontColor
             prefs[Keys.WALLPAPER_URI]      = s.wallpaperUri
