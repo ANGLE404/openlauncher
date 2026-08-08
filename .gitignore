@@ -4,6 +4,7 @@
 *.aar
 *.ap_
 *.aab
+*.idsig
 
 # Release directory — binaries ignored, release notes tracked
 release/*.apk
