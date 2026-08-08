@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">开放启动器</string>
+    <string name="settings_label">开放启动器设置</string>
+    <string name="media_label">开放启动器媒体服务</string>
+</resources>
