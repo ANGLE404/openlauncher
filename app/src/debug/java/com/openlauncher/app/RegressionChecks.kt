@@ -25,11 +25,17 @@ object RegressionChecks {
         check(!shouldUseLegacyFontColor(null, 20, 20))
         check(shouldUseLegacyFontColor(null, 21, 20))
         check(!shouldUseCustomBackground(isDayMode = true, useFullCustomTheme = false, backgroundLuminance = 0.01f))
-        check(shouldUseCustomBackground(isDayMode = true, useFullCustomTheme = true, backgroundLuminance = 0.01f))
+        check(!shouldUseCustomBackground(isDayMode = true, useFullCustomTheme = true, backgroundLuminance = 0.01f))
         check(shouldUseCustomBackground(isDayMode = true, useFullCustomTheme = false, backgroundLuminance = 0.8f))
         check(shouldUseCustomBackground(isDayMode = false, useFullCustomTheme = false, backgroundLuminance = 0.01f))
         check(!shouldUseCustomGradient(applyCustomBackground = false, useGradient = true))
         check(shouldUseCustomGradient(applyCustomBackground = true, useGradient = true))
+        check(!shouldUseCustomGradient(
+            applyCustomBackground = true,
+            useGradient = true,
+            isDayMode = true,
+            gradientEndLuminance = 0.01f
+        ))
 
         check(freshSpeedMps(12f, 10_000L, 17_999L) == 12f)
         check(freshSpeedMps(12f, 10_000L, 18_001L) == 0f)

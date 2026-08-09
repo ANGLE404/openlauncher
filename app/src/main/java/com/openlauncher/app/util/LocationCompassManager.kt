@@ -46,6 +46,7 @@ class LocationCompassManager(context: Context) {
     private var bearingSin   = 0f
     private var bearingCos   = 1f   // initial: pointing north
     private var lastLocationForBearing: Location? = null
+    private var isStarted = false
 
     private val sensorListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent) {
@@ -116,6 +117,8 @@ class LocationCompassManager(context: Context) {
     }
 
     fun start() {
+        if (isStarted) return
+        isStarted = true
         // Sensors
         sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.let {
             sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_UI)
@@ -133,7 +136,10 @@ class LocationCompassManager(context: Context) {
             Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
-        if (!hasFineLocation && !hasCoarseLocation) return
+        if (!hasFineLocation && !hasCoarseLocation) {
+            isStarted = false
+            return
+        }
 
         // Location — Robust offline-first registration
         // GPS Provider (Works 100% offline, sat-based)
@@ -166,8 +172,11 @@ class LocationCompassManager(context: Context) {
     }
 
     fun stop() {
+        if (!isStarted) return
+        isStarted = false
         sensorManager.unregisterListener(sensorListener)
         locationManager.removeUpdates(locationListener)
         lastLocationForBearing = null
+        _location.value = null
     }
 }

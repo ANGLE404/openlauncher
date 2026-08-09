@@ -23,7 +23,7 @@ fun OpenLauncherTheme(
     themeColors: ThemeColors = com.openlauncher.app.data.DashboardStyle.OEM.defaultThemeColors(AccentIceBlue),
     fontBold: Boolean = false,
     textScale: Float  = 1.0f,
-    appFont: AppFont  = AppFont.NOTO_SANS_SC,
+    appFont: AppFont  = AppFont.PIXEL,
     isDayMode: Boolean = false,
     content: @Composable (ThemeColors) -> Unit
 ) {
@@ -82,7 +82,12 @@ fun OpenLauncherTheme(
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
-            typography  = launcherTypography(fontBold, textScale, appFont.toFontFamily()),
+            typography  = launcherTypography(
+                bold = fontBold,
+                scale = textScale,
+                fontFamily = appFont.toFontFamily(),
+                displayFontFamily = if (appFont == AppFont.PIXEL) PixelFashion16 else appFont.toFontFamily()
+            ),
             shapes      = LauncherShapes,
         ) { content(animatedColors) }
     }

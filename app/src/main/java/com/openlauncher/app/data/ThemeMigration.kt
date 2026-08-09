@@ -18,9 +18,12 @@ fun shouldUseCustomBackground(
     isDayMode: Boolean,
     useFullCustomTheme: Boolean,
     backgroundLuminance: Float
-): Boolean = !isDayMode || useFullCustomTheme || backgroundLuminance >= 0.35f
+): Boolean = !isDayMode || backgroundLuminance >= 0.35f
 
 fun shouldUseCustomGradient(
     applyCustomBackground: Boolean,
-    useGradient: Boolean
-): Boolean = applyCustomBackground && useGradient
+    useGradient: Boolean,
+    isDayMode: Boolean = false,
+    gradientEndLuminance: Float = 1f
+): Boolean = applyCustomBackground && useGradient &&
+    (!isDayMode || gradientEndLuminance >= 0.35f)

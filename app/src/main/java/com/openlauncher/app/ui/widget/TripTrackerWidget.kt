@@ -23,7 +23,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -185,7 +184,7 @@ fun TripTrackerWidget(
                         text = "距离 // 距离",
                         color = labelColor,
                         fontSize = 6.5.sp,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp
                     )
@@ -198,14 +197,14 @@ fun TripTrackerWidget(
                                 text = "88.88",
                                 color = dimDisplayColor,
                                 fontSize = 24.sp,
-                                fontFamily = FontFamily.Monospace,
+                                fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
                                 text = "%05.2f".format(distanceDisplay),
                                 color = displayColor,
                                 fontSize = 24.sp,
-                                fontFamily = FontFamily.Monospace,
+                                fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -213,7 +212,7 @@ fun TripTrackerWidget(
                             text = distUnit,
                             color = displayColor,
                             fontSize = 9.sp,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(bottom = 2.dp)
                         )
@@ -226,14 +225,14 @@ fun TripTrackerWidget(
                             color = if (isRunning) activeAccent else dimDisplayColor,
                             fontSize = 6.sp,
                             fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Monospace
+                            fontFamily = com.openlauncher.app.ui.theme.PixelNumeric
                         )
                         Text(
                             text = "[已暂停]",
                             color = if (!isRunning && (driveTimeSeconds > 0 || idleTimeSeconds > 0)) teRed else dimDisplayColor,
                             fontSize = 6.sp,
                             fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Monospace
+                            fontFamily = com.openlauncher.app.ui.theme.PixelNumeric
                         )
                     }
                 }
@@ -247,17 +246,17 @@ fun TripTrackerWidget(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("驾驶［时间］", color = labelColor, fontSize = 6.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+                        Text("驾驶［时间］", color = labelColor, fontSize = 6.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric, fontWeight = FontWeight.Bold)
                         Box {
-                            Text("88:88:88", color = dimDisplayColor, fontSize = 9.sp, fontFamily = FontFamily.Monospace)
-                            Text(formatTime(driveTimeSeconds), color = displayColor, fontSize = 9.sp, fontFamily = FontFamily.Monospace)
+                            Text("88:88:88", color = dimDisplayColor, fontSize = 9.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric)
+                            Text(formatTime(driveTimeSeconds), color = displayColor, fontSize = 9.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric)
                         }
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("怠速［时间］", color = labelColor, fontSize = 6.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+                        Text("怠速［时间］", color = labelColor, fontSize = 6.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric, fontWeight = FontWeight.Bold)
                         Box {
-                            Text("88:88:88", color = dimDisplayColor, fontSize = 9.sp, fontFamily = FontFamily.Monospace)
-                            Text(formatTime(idleTimeSeconds), color = displayColor, fontSize = 9.sp, fontFamily = FontFamily.Monospace)
+                            Text("88:88:88", color = dimDisplayColor, fontSize = 9.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric)
+                            Text(formatTime(idleTimeSeconds), color = displayColor, fontSize = 9.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric)
                         }
                     }
                 }
@@ -273,7 +272,7 @@ fun TripTrackerWidget(
                             text = "平均速度 // 速度",
                             color = labelColor,
                             fontSize = 6.5.sp,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.5.sp
                         )
@@ -286,14 +285,14 @@ fun TripTrackerWidget(
                                     text = "888.8",
                                     color = dimDisplayColor,
                                     fontSize = 15.sp,
-                                    fontFamily = FontFamily.Monospace,
+                                    fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
                                     text = "%05.1f".format(avgSpeedDisplay),
                                     color = displayColor,
                                     fontSize = 15.sp,
-                                    fontFamily = FontFamily.Monospace,
+                                    fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
@@ -301,7 +300,7 @@ fun TripTrackerWidget(
                                 text = speedUnit,
                                 color = displayColor,
                                 fontSize = 7.sp,
-                                fontFamily = FontFamily.Monospace,
+                                fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(bottom = 1.dp)
                             )
@@ -312,12 +311,12 @@ fun TripTrackerWidget(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Text("系统状态", color = labelColor, fontSize = 6.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+                        Text("系统状态", color = labelColor, fontSize = 6.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric, fontWeight = FontWeight.Bold)
                         Text(
                             text = if (isRunning) "A" else "I",
                             color = if (isRunning) activeAccent else displayColor,
                             fontSize = 10.sp,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -415,7 +414,7 @@ private fun TeTactileButton(
             text = label,
             color = printedLabelColor,
             fontSize = 7.sp,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.5.sp
         )

@@ -35,7 +35,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -223,13 +222,13 @@ private fun RadioDeck(
             Text(
                 "无收音机来源",
                 color = contentColor.copy(alpha = 0.85f),
-                fontSize = 9.sp, fontFamily = FontFamily.Monospace,
+                fontSize = 9.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                 fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp
             )
             Spacer(Modifier.height(3.dp))
             Text(
                 "请启动车机收音机应用，或在下方指定应用，让开放启动器镜像并控制它",
-                color = dimColor, fontSize = 7.sp, fontFamily = FontFamily.Monospace,
+                color = dimColor, fontSize = 7.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 lineHeight = 10.sp,
                 modifier = Modifier.padding(horizontal = 28.dp)
@@ -246,7 +245,7 @@ private fun RadioDeck(
             ) {
                 Text(
                     "指定收音机应用",
-                    color = accent, fontSize = 7.5.sp, fontFamily = FontFamily.Monospace,
+                    color = accent, fontSize = 7.5.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                     fontWeight = FontWeight.Bold, letterSpacing = 1.sp
                 )
             }
@@ -301,7 +300,7 @@ private fun RadioDeck(
                             Text(
                                 b,
                                 color = if (active) chipActiveText else dimColor,
-                                fontSize = 8.sp, fontFamily = FontFamily.Monospace,
+                                fontSize = 8.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                                 fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp
                             )
                         }
@@ -321,7 +320,7 @@ private fun RadioDeck(
                     Text(
                         displayBand,
                         color = chipActiveText,
-                        fontSize = 8.sp, fontFamily = FontFamily.Monospace,
+                        fontSize = 8.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                         fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp
                     )
                 }
@@ -354,12 +353,12 @@ private fun RadioDeck(
                     displayFreq,
                     color = if (powerOn) contentColor else contentColor.copy(alpha = 0.3f),
                     fontSize = 34.sp, fontWeight = FontWeight.Light,
-                    fontFamily = FontFamily.Monospace, letterSpacing = 0.sp
+                    fontFamily = com.openlauncher.app.ui.theme.PixelNumeric, letterSpacing = 0.sp
                 )
                 Text(
                     displayUnit,
                     color = dimColor, fontSize = 10.sp,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                     modifier = Modifier.padding(bottom = 5.dp)
                 )
             }
@@ -367,7 +366,7 @@ private fun RadioDeck(
                 Text(
                         text = if (!powerOn) "收音机关闭" else hardwareRadio.stationName ?: "直播中",
                     color = if (powerOn) accent else dimColor.copy(alpha = 0.5f),
-                    fontSize = 8.sp, fontFamily = FontFamily.Monospace,
+                    fontSize = 8.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                     letterSpacing = 1.5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis
                 )
                 if (powerOn) {
@@ -442,11 +441,11 @@ private fun RadioDeck(
                             verticalArrangement = Arrangement.spacedBy(1.dp)
                         ) {
                             Text("${pIdx + 1}", color = presetNumColor, fontSize = 7.sp,
-                                fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+                                fontFamily = com.openlauncher.app.ui.theme.PixelNumeric, fontWeight = FontWeight.Bold)
                             Text(
                                 if (isFm) "%.1f".format(presetFreq) else "%.0f".format(presetFreq),
                                 color = presetFreqColor, fontSize = 6.sp,
-                                fontFamily = FontFamily.Monospace
+                                fontFamily = com.openlauncher.app.ui.theme.PixelNumeric
                             )
                         }
                     }
@@ -484,7 +483,7 @@ private fun RadioFlatButton(
                 else     -> dimColor
             },
             fontSize = 8.sp,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.8.sp
         )

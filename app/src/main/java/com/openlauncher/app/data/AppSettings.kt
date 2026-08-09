@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.toArgb
 
 enum class ClockStyle { DIGITAL, ANALOG }
 enum class UnitSystem { METRIC, IMPERIAL }
-enum class AppFont { SYSTEM, NOTO_SANS_SC, JETBRAINS_MONO, SOURCE_CODE_PRO }
+enum class AppFont { PIXEL, SYSTEM, NOTO_SANS_SC, JETBRAINS_MONO, SOURCE_CODE_PRO }
 enum class DashboardTheme { ICE_BLUE, TRACK_ORANGE, ALERT_RED, AURORA_GREEN, NEON_PURPLE }
 enum class DashboardStyle { OEM, CYBER, GLASS }
 enum class DayNightMode { DARK, LIGHT, AUTO, SYSTEM }
@@ -83,7 +83,7 @@ data class AppSettings(
     val uiScale: Float = 1.0f,
     val clockStyle: ClockStyle = ClockStyle.DIGITAL,
     val unitSystem: UnitSystem = UnitSystem.METRIC,
-    val appFont: AppFont = AppFont.NOTO_SANS_SC,
+    val appFont: AppFont = AppFont.PIXEL,
     val showWeather: Boolean = true,
     val showClock: Boolean = true,
     val showTelemetry: Boolean = true,

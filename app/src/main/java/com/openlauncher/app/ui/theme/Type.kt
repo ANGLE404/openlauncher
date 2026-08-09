@@ -30,21 +30,42 @@ val NotoSansSC = FontFamily(
     Font(R.font.noto_sans_sc_bold, FontWeight.Bold),
 )
 
+val PixelBitmap9x9 = FontFamily(
+    Font(R.font.boutique_bitmap_9x9_regular, FontWeight.Normal),
+    Font(R.font.boutique_bitmap_9x9_bold, FontWeight.Medium),
+    Font(R.font.boutique_bitmap_9x9_bold, FontWeight.SemiBold),
+    Font(R.font.boutique_bitmap_9x9_bold, FontWeight.Bold),
+)
+
+val PixelFashion16 = FontFamily(
+    Font(R.font.fashion_bitmap_16, FontWeight.Normal),
+    Font(R.font.fashion_bitmap_16, FontWeight.Medium),
+    Font(R.font.fashion_bitmap_16, FontWeight.Bold),
+)
+
+val PixelNumeric = PixelBitmap9x9
+
 fun AppFont.toFontFamily(): FontFamily = when (this) {
+    AppFont.PIXEL          -> PixelBitmap9x9
     AppFont.SYSTEM          -> FontFamily.Default
     AppFont.NOTO_SANS_SC    -> NotoSansSC
     AppFont.JETBRAINS_MONO  -> JetBrainsMono
     AppFont.SOURCE_CODE_PRO -> SourceCodePro
 }
 
-fun launcherTypography(bold: Boolean, scale: Float, fontFamily: FontFamily = FontFamily.Default): Typography {
+fun launcherTypography(
+    bold: Boolean,
+    scale: Float,
+    fontFamily: FontFamily = FontFamily.Default,
+    displayFontFamily: FontFamily = fontFamily
+): Typography {
     val weight = if (bold) FontWeight.Bold else FontWeight.Normal
     return Typography(
-        displayLarge   = TextStyle(fontFamily = fontFamily, fontWeight = FontWeight.Light,  fontSize = (57 * scale).sp),
-        displayMedium  = TextStyle(fontFamily = fontFamily, fontWeight = FontWeight.Light,  fontSize = (45 * scale).sp),
-        headlineLarge  = TextStyle(fontFamily = fontFamily, fontWeight = weight,            fontSize = (32 * scale).sp),
-        headlineMedium = TextStyle(fontFamily = fontFamily, fontWeight = weight,            fontSize = (28 * scale).sp),
-        headlineSmall  = TextStyle(fontFamily = fontFamily, fontWeight = weight,            fontSize = (24 * scale).sp),
+        displayLarge   = TextStyle(fontFamily = displayFontFamily, fontWeight = FontWeight.Light, fontSize = (57 * scale).sp),
+        displayMedium  = TextStyle(fontFamily = displayFontFamily, fontWeight = FontWeight.Light, fontSize = (45 * scale).sp),
+        headlineLarge  = TextStyle(fontFamily = displayFontFamily, fontWeight = weight,          fontSize = (32 * scale).sp),
+        headlineMedium = TextStyle(fontFamily = displayFontFamily, fontWeight = weight,          fontSize = (28 * scale).sp),
+        headlineSmall  = TextStyle(fontFamily = displayFontFamily, fontWeight = weight,          fontSize = (24 * scale).sp),
         titleLarge     = TextStyle(fontFamily = fontFamily, fontWeight = FontWeight.Medium, fontSize = (22 * scale).sp),
         titleMedium    = TextStyle(fontFamily = fontFamily, fontWeight = FontWeight.Medium, fontSize = (16 * scale).sp),
         titleSmall     = TextStyle(fontFamily = fontFamily, fontWeight = FontWeight.Medium, fontSize = (14 * scale).sp),

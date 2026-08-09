@@ -18,10 +18,13 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.openlauncher.app.data.DayNightMode
@@ -106,8 +109,13 @@ class MainActivity : ComponentActivity() {
                 secondaryText = Color(settings.secondaryTextColor),
                 glow = Color(settings.accentColor)
             )
-            val baseThemeColors = if (settings.useCustomThemeColors) configuredColors else themeDefaults
             val customBackground = Color(settings.backgroundColor)
+            val canUseConfiguredTheme = settings.useCustomThemeColors && shouldUseCustomBackground(
+                isDayMode = isDayMode,
+                useFullCustomTheme = true,
+                backgroundLuminance = customBackground.luminance()
+            )
+            val baseThemeColors = if (canUseConfiguredTheme) configuredColors else themeDefaults
             val applyCustomBackground = settings.useCustomBackgroundColor && shouldUseCustomBackground(
                 isDayMode = isDayMode,
                 useFullCustomTheme = settings.useCustomThemeColors,
@@ -124,7 +132,7 @@ class MainActivity : ComponentActivity() {
                 )
             ) {
                 if (!settingsLoaded) {
-                    Box(modifier = Modifier.fillMaxSize().background(Color.Black))
+                    Box(modifier = Modifier.fillMaxSize().background(Color(0xFFF1F5F6)))
                 } else OpenLauncherTheme(
                     themeColors = themeColors,
                     fontBold   = settings.fontBold,
@@ -139,7 +147,12 @@ class MainActivity : ComponentActivity() {
                     animationSpec = tween(420),
                     label = "gradient_end_transition"
                 )
-                val bgBrush = if (shouldUseCustomGradient(applyCustomBackground, settings.useGradient)) {
+                val bgBrush = if (shouldUseCustomGradient(
+                        applyCustomBackground = applyCustomBackground,
+                        useGradient = settings.useGradient,
+                        isDayMode = isDayMode,
+                        gradientEndLuminance = bgGradientEnd.luminance()
+                    )) {
                     val colors = listOf(bg, bgGradientEnd)
                     when (settings.gradientDirection) {
                         GradientDirection.TOP_TO_BOTTOM -> androidx.compose.ui.graphics.Brush.verticalGradient(colors)
@@ -160,6 +173,19 @@ class MainActivity : ComponentActivity() {
                 } else {
                     Box(modifier = Modifier.fillMaxSize().let { m ->
                         if (bgBrush != null) m.background(bgBrush) else m.background(bg)
+                    }.drawBehind {
+                        val gridColor = animatedThemeColors.border.copy(alpha = 0.07f)
+                        val step = 24.dp.toPx()
+                        var x = step
+                        while (x < size.width) {
+                            drawLine(gridColor, Offset(x, 0f), Offset(x, size.height), 1f)
+                            x += step
+                        }
+                        var y = step
+                        while (y < size.height) {
+                            drawLine(gridColor, Offset(0f, y), Offset(size.width, y), 1f)
+                            y += step
+                        }
                     }) {
                         // Optional wallpaper layer
                         if (settings.wallpaperUri.isNotEmpty()) {

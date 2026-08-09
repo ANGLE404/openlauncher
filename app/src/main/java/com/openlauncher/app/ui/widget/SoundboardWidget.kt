@@ -24,7 +24,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -113,7 +112,7 @@ fun SoundboardWidget(
                             text = pad.label,
                             color = if (isActive) accent else if (isPlus) dimColor else contentColor,
                             fontSize = if (isPlus) 16.sp else 9.sp,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.5.sp,
                             maxLines = 1,
@@ -188,14 +187,14 @@ private fun PadAssignDialog(
                 "指定音效",
                 color = contentColor,
                 fontSize = 10.sp,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 2.sp
             )
 
             // Label field
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("音效名称", color = dimColor, fontSize = 7.sp, fontFamily = FontFamily.Monospace, letterSpacing = 1.5.sp)
+                Text("音效名称", color = dimColor, fontSize = 7.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric, letterSpacing = 1.5.sp)
                 BasicTextField(
                     value = labelText,
                     onValueChange = { if (it.length <= 12) labelText = it },
@@ -203,7 +202,7 @@ private fun PadAssignDialog(
                     textStyle = TextStyle(
                         color = contentColor,
                         fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace
+                        fontFamily = com.openlauncher.app.ui.theme.PixelNumeric
                     ),
                     cursorBrush = SolidColor(accent),
                     modifier = Modifier
@@ -215,7 +214,7 @@ private fun PadAssignDialog(
 
             // Preloaded Audio Selector (replaces old raw waveform synth generation)
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("预置音频", color = dimColor, fontSize = 7.sp, fontFamily = FontFamily.Monospace, letterSpacing = 1.5.sp)
+                Text("预置音频", color = dimColor, fontSize = 7.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric, letterSpacing = 1.5.sp)
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -246,7 +245,7 @@ private fun PadAssignDialog(
                                 chipLabel,
                                 color = if (active) accent else dimColor,
                                 fontSize = 8.sp,
-                                fontFamily = FontFamily.Monospace,
+                                fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -256,7 +255,7 @@ private fun PadAssignDialog(
 
             // Custom audio file picker
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("自定义音频文件", color = dimColor, fontSize = 7.sp, fontFamily = FontFamily.Monospace, letterSpacing = 1.5.sp)
+                Text("自定义音频文件", color = dimColor, fontSize = 7.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric, letterSpacing = 1.5.sp)
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -275,7 +274,7 @@ private fun PadAssignDialog(
                             if (audioUri.isNotEmpty()) "已指定自定义文件" else "选择音频文件",
                             color = accent,
                             fontSize = 7.sp,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -293,7 +292,7 @@ private fun PadAssignDialog(
                         audioUri.substringAfterLast('/').take(36),
                         color = dimColor.copy(alpha = 0.6f),
                         fontSize = 6.5.sp,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -315,7 +314,7 @@ private fun PadAssignDialog(
                     border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error),
                     contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text("清除音效", color = MaterialTheme.colorScheme.error, fontSize = 7.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+                    Text("清除音效", color = MaterialTheme.colorScheme.error, fontSize = 7.5.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -332,7 +331,7 @@ private fun PadAssignDialog(
                     border = androidx.compose.foundation.BorderStroke(1.dp, fieldBorder),
                     contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text("取消", color = dimColor, fontSize = 7.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+                    Text("取消", color = dimColor, fontSize = 7.5.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric, fontWeight = FontWeight.Bold)
                 }
                 Button(
                     onClick = {
@@ -347,7 +346,7 @@ private fun PadAssignDialog(
                     colors = ButtonDefaults.buttonColors(containerColor = accent),
                     contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text("保存音效", color = MaterialTheme.colorScheme.onPrimary, fontSize = 7.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+                    Text("保存音效", color = MaterialTheme.colorScheme.onPrimary, fontSize = 7.5.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric, fontWeight = FontWeight.Bold)
                 }
             }
         }
