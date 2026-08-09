@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.openlauncher.app.ui.theme.LauncherCardShape
 import com.openlauncher.app.util.LocationData
 import com.openlauncher.app.util.activeFreshSpeedMpsOrNull
 import com.openlauncher.app.util.tripAverageSpeedMps
@@ -151,9 +152,9 @@ fun TripTrackerWidget(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(LauncherCardShape)
                 .background(lcdBg)
-                .border(1.dp, lcdBorder, RoundedCornerShape(12.dp))
+                .border(1.dp, lcdBorder, LauncherCardShape)
                 .drawBehind {
                     val dotColor = displayColor.copy(alpha = 0.02f)
                     val dotSize = 1.dp.toPx()
@@ -181,10 +182,9 @@ fun TripTrackerWidget(
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "距离 // 距离",
+                        text = "距离",
                         color = labelColor,
                         fontSize = 6.5.sp,
-                        fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp
                     )
@@ -218,23 +218,12 @@ fun TripTrackerWidget(
                         )
                     }
                     
-                    // Hired/Time-Off Indicators
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(
-                            text = "[记录中]",
-                            color = if (isRunning) activeAccent else dimDisplayColor,
-                            fontSize = 6.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = com.openlauncher.app.ui.theme.PixelNumeric
-                        )
-                        Text(
-                            text = "[已暂停]",
-                            color = if (!isRunning && (driveTimeSeconds > 0 || idleTimeSeconds > 0)) teRed else dimDisplayColor,
-                            fontSize = 6.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = com.openlauncher.app.ui.theme.PixelNumeric
-                        )
-                    }
+                    Text(
+                        text = if (isRunning) "记录中" else "已暂停",
+                        color = if (isRunning) activeAccent else if (driveTimeSeconds > 0 || idleTimeSeconds > 0) teRed else dimDisplayColor,
+                        fontSize = 6.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
 
                 // Panel Column 2: Drive & Idle Timers
@@ -246,14 +235,14 @@ fun TripTrackerWidget(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("驾驶［时间］", color = labelColor, fontSize = 6.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric, fontWeight = FontWeight.Bold)
+                        Text("驾驶时间", color = labelColor, fontSize = 6.sp, fontWeight = FontWeight.Bold)
                         Box {
                             Text("88:88:88", color = dimDisplayColor, fontSize = 9.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric)
                             Text(formatTime(driveTimeSeconds), color = displayColor, fontSize = 9.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric)
                         }
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("怠速［时间］", color = labelColor, fontSize = 6.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric, fontWeight = FontWeight.Bold)
+                        Text("怠速时间", color = labelColor, fontSize = 6.sp, fontWeight = FontWeight.Bold)
                         Box {
                             Text("88:88:88", color = dimDisplayColor, fontSize = 9.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric)
                             Text(formatTime(idleTimeSeconds), color = displayColor, fontSize = 9.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric)
@@ -269,10 +258,9 @@ fun TripTrackerWidget(
                 ) {
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "平均速度 // 速度",
+                            text = "平均速度",
                             color = labelColor,
                             fontSize = 6.5.sp,
-                            fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.5.sp
                         )
@@ -311,12 +299,11 @@ fun TripTrackerWidget(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Text("系统状态", color = labelColor, fontSize = 6.sp, fontFamily = com.openlauncher.app.ui.theme.PixelNumeric, fontWeight = FontWeight.Bold)
+                        Text("系统状态", color = labelColor, fontSize = 6.sp, fontWeight = FontWeight.Bold)
                         Text(
-                            text = if (isRunning) "A" else "I",
+                            text = if (isRunning) "运行" else "暂停",
                             color = if (isRunning) activeAccent else displayColor,
-                            fontSize = 10.sp,
-                            fontFamily = com.openlauncher.app.ui.theme.PixelNumeric,
+                            fontSize = 7.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }

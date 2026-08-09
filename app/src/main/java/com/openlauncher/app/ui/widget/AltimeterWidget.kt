@@ -33,8 +33,8 @@ fun AltimeterWidget(
     isDayMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    val iconTint = if (isDayMode) Color(0xFF333333) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f)
-    val labelColor = if (isDayMode) Color(0xFF888888) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.30f)
+    val iconTint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val context = LocalContext.current
 
     // Accelerometer sensor state
@@ -106,13 +106,22 @@ fun AltimeterWidget(
         modifier          = modifier,
         contentAlignment  = Alignment.Center
     ) {
-        // Prominent Altitude Display at the top
         Column(
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .align(Alignment.Center)
+                .padding(bottom = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
+            Icon(
+                imageVector        = Icons.Default.DirectionsCar,
+                contentDescription = null,
+                tint               = iconTint,
+                modifier           = Modifier
+                    .size(34.dp)
+                    .graphicsLayer { rotationZ = displayRoll }
+            )
+            Spacer(Modifier.height(4.dp))
             Text(
                 text = "海拔",
                 color = labelColor,
@@ -126,22 +135,11 @@ fun AltimeterWidget(
                     val unit = if (isMetric) "m" else "ft"
                     "%,.0f %s".format(altVal, unit)
                 } else "—",
-                color = if (isDayMode) Color(0xFF111111) else MaterialTheme.colorScheme.onBackground,
-                fontSize = 15.sp,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
         }
-
-        // Center car icon showing roll angle
-        Icon(
-            imageVector        = Icons.Default.DirectionsCar,
-            contentDescription = null,
-            tint               = iconTint,
-            modifier           = Modifier
-                .size(56.dp)
-                .padding(top = 10.dp)
-                .graphicsLayer { rotationZ = displayRoll }
-        )
 
         // Bottom Inclinometer telemetry labels (Roll & Pitch)
         Row(

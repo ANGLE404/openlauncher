@@ -42,12 +42,16 @@ import com.openlauncher.app.data.GRID_ROWS
 import com.openlauncher.app.data.WidgetConfig
 import com.openlauncher.app.model.NowPlayingState
 import com.openlauncher.app.model.WeatherState
+import com.openlauncher.app.ui.theme.LauncherChipShape
+import com.openlauncher.app.ui.theme.LauncherControlShape
+import com.openlauncher.app.ui.theme.LauncherDialogShape
+import com.openlauncher.app.ui.theme.LauncherLargeShape
 import com.openlauncher.app.ui.theme.LocalDayMode
 import com.openlauncher.app.ui.widget.*
 import java.util.Calendar
 import com.openlauncher.app.util.LocationData
 
-private val WIDGET_RADIUS = RoundedCornerShape(14.dp)
+private val WIDGET_RADIUS = LauncherLargeShape
 
 private fun widgetDisplayName(id: String): String = when (id) {
     "CLOCK" -> "时钟"
@@ -584,9 +588,9 @@ private fun WidgetContextMenu(
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
+                .clip(LauncherControlShape)
                 .background(menuBg)
-                .border(1.dp, menuBorder, RoundedCornerShape(10.dp))
+                .border(1.dp, menuBorder, LauncherControlShape)
                 .padding(vertical = 4.dp)
                 .width(200.dp)
         ) {
@@ -796,7 +800,7 @@ private fun SpanRow(
                         .size(width = 14.dp, height = 10.dp)
                         .background(
                             if (i < value) accent.copy(alpha = 0.7f) else inactiveBg,
-                            RoundedCornerShape(8.dp)
+                            LauncherChipShape
                         )
                 )
             }
@@ -836,9 +840,9 @@ private fun WidgetLibraryDialog(
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
+                .clip(LauncherDialogShape)
                 .background(dialogBg)
-                .border(1.dp, dialogBorder, RoundedCornerShape(10.dp))
+                .border(1.dp, dialogBorder, LauncherDialogShape)
                 .padding(16.dp)
                 .widthIn(min = 320.dp, max = 520.dp)
         ) {
@@ -911,9 +915,9 @@ private fun WidgetLibraryCard(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .clip(RoundedCornerShape(10.dp))
+            .clip(LauncherControlShape)
             .background(cardBg)
-            .border(1.dp, cardBorder, RoundedCornerShape(10.dp))
+            .border(1.dp, cardBorder, LauncherControlShape)
             .clickable(enabled = enabled, onClick = onToggle)
             .padding(6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

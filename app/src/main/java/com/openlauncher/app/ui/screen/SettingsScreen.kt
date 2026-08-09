@@ -148,6 +148,15 @@ fun SettingsScreen(
                     home, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY
                 )?.activityInfo?.packageName == context.packageName
             }
+            val hasMediaAccess = remember(permissionRefresh) {
+                com.openlauncher.app.service.MediaListenerService.hasNotificationAccess(context)
+            }
+
+            LaunchedEffect(hasMediaAccess) {
+                if (hasMediaAccess) {
+                    com.openlauncher.app.service.MediaListenerService.requestRefresh(context)
+                }
+            }
 
             val homeRoleLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.StartActivityForResult()
@@ -198,10 +207,18 @@ fun SettingsScreen(
             SettingsDivider()
             SettingsButton(
                 label    = "通知访问",
-                sublabel = if (isMediaConnected) "已授予，媒体控制已启用" else "正在播放组件所需",
+                sublabel = when {
+                    isMediaConnected -> "已连接，封面、歌词和播放控制已启用"
+                    hasMediaAccess -> "已授权，正在重新连接媒体服务"
+                    else -> "正在播放组件所需"
+                },
                 icon     = if (isMediaConnected) Icons.Default.NotificationsActive else Icons.Default.NotificationsOff,
-                accent   = if (isMediaConnected) accent else MaterialTheme.colorScheme.error,
+                accent   = if (hasMediaAccess) accent else MaterialTheme.colorScheme.error,
                 onClick  = {
+                    if (hasMediaAccess) {
+                        com.openlauncher.app.service.MediaListenerService.requestRefresh(context)
+                        return@SettingsButton
+                    }
                     val notificationSettings = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
                     val intent = notificationSettings.takeIf { it.resolveActivity(context.packageManager) != null }
                         ?: Intent(Settings.ACTION_SETTINGS)
@@ -489,7 +506,7 @@ fun SettingsScreen(
                 Box(
                     modifier = Modifier
                         .size(32.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(MaterialTheme.shapes.extraSmall)
                         .background(Color(settings.accentColor))
                         .clickable { showAccentPicker = true }
                 )
@@ -511,7 +528,7 @@ fun SettingsScreen(
                     Box(
                         modifier = Modifier
                             .size(28.dp)
-                            .clip(RoundedCornerShape(10.dp))
+                            .clip(MaterialTheme.shapes.small)
                             .background(Color(settings.backgroundColor))
                             .clickable { showBgPicker = true }
                     )
@@ -524,7 +541,7 @@ fun SettingsScreen(
                         Box(
                             modifier = Modifier
                                 .size(28.dp)
-                                .clip(RoundedCornerShape(10.dp))
+                                .clip(MaterialTheme.shapes.small)
                                 .background(Color(settings.gradientEndColor))
                                 .clickable { showGradientEndPicker = true }
                         )
@@ -578,7 +595,7 @@ fun SettingsScreen(
                         Box(
                             modifier = Modifier
                                 .size(if (settings.dashboardTheme == theme) 34.dp else 28.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(MaterialTheme.shapes.extraSmall)
                                 .background(color)
                                 .clickable {
                                 onUpdate { withThemeDefaults(isDayMode = isDayMode, theme = theme) }
@@ -599,7 +616,7 @@ fun SettingsScreen(
                 Box(
                     modifier = Modifier
                         .size(32.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(MaterialTheme.shapes.extraSmall)
                         .background(Color(settings.fontColor))
                         .clickable { showFontColorPicker = true }
                 )
@@ -909,7 +926,7 @@ fun SettingsScreen(
             Spacer(Modifier.height(8.dp))
             Button(
                 onClick  = { showResetDialog = true },
-                shape    = RoundedCornerShape(10.dp),
+                shape    = MaterialTheme.shapes.small,
                 colors   = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer),
                 modifier = Modifier.fillMaxWidth().height(44.dp)
             ) {
@@ -1039,7 +1056,7 @@ private fun ThemeColorSwatch(color: Color, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .size(32.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .clip(MaterialTheme.shapes.extraSmall)
             .background(color)
             .clickable(onClick = onClick)
     )
@@ -1205,7 +1222,7 @@ private fun sliderColors(accent: Color): androidx.compose.material3.SliderColors
 private fun fontDisplayName(font: AppFont): String = when (font) {
     AppFont.PIXEL          -> "精品点阵体 9×9"
     AppFont.SYSTEM          -> "系统字体"
-    AppFont.NOTO_SANS_SC    -> "Noto Sans SC"
-    AppFont.JETBRAINS_MONO  -> "JetBrains Mono"
-    AppFont.SOURCE_CODE_PRO -> "Source Code Pro"
+    AppFont.NOTO_SANS_SC    -> "思源黑体（Noto Sans SC）"
+    AppFont.JETBRAINS_MONO  -> "极客等宽体（JetBrains Mono）"
+    AppFont.SOURCE_CODE_PRO -> "源码等宽体（Source Code Pro）"
 }

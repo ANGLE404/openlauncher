@@ -29,21 +29,21 @@ fun WeatherWidget(
     Box(modifier = modifier) {
         if (state != null) {
             Column(
-                modifier            = Modifier.fillMaxSize().padding(start = 14.dp, bottom = 14.dp),
-                verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.Start
+                modifier            = Modifier.fillMaxSize().padding(12.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text     = state.conditionIcon,
-                    fontSize = 34.sp
+                    fontSize = 30.sp
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(2.dp))
                 Text(
                     text       = state.temperatureDisplay(metric),
                     color      = contentColor,
-                    fontSize   = 32.sp,
-                    fontWeight = FontWeight.Light,
-                    letterSpacing = 1.sp
+                    fontSize   = 38.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.sp
                 )
                 Text(
                     text = if (isCached) {
@@ -53,19 +53,20 @@ fun WeatherWidget(
                     } else state.conditionLabel,
                     color         = subColor,
                     fontSize      = 9.sp,
-                    letterSpacing = 1.sp
+                    letterSpacing = 0.sp,
+                    textAlign     = androidx.compose.ui.text.style.TextAlign.Center
                 )
             }
         } else {
             Column(
-                modifier = Modifier.fillMaxSize().padding(start = 14.dp, bottom = 14.dp),
-                verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.Start
+                modifier = Modifier.fillMaxSize().padding(12.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("天气", color = subColor, fontSize = 12.sp, letterSpacing = 1.sp)
+                Text("天气", color = subColor, fontSize = 12.sp, letterSpacing = 0.sp)
                 Spacer(Modifier.height(4.dp))
                 Text("等待定位或网络", color = contentColor, fontSize = 14.sp)
-                Text("暂时不可用", color = subColor, fontSize = 9.sp, letterSpacing = 0.5.sp)
+                Text("暂时不可用", color = subColor, fontSize = 9.sp, letterSpacing = 0.sp)
             }
         }
     }

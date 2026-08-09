@@ -11,7 +11,6 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -22,9 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -38,6 +35,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.openlauncher.app.BuildConfig
 import com.openlauncher.app.data.AppSettings
+import com.openlauncher.app.service.MediaListenerService
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -60,10 +58,8 @@ fun OnboardingScreen(
             context, Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
-        val enabledListeners = Settings.Secure.getString(
-            context.contentResolver, "enabled_notification_listeners"
-        )
-        mediaGranted = enabledListeners != null && enabledListeners.contains(context.packageName)
+        mediaGranted = MediaListenerService.hasNotificationAccess(context)
+        if (mediaGranted) MediaListenerService.requestRefresh(context)
     }
 
     DisposableEffect(lifecycleOwner) {
@@ -94,25 +90,13 @@ fun OnboardingScreen(
         }
     }
 
+    val colorScheme = MaterialTheme.colorScheme
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF070707))
+            .background(colorScheme.background)
     ) {
-        // Aesthetic glowing background orb
-        Box(
-            modifier = Modifier
-                .size(400.dp)
-                .align(Alignment.BottomEnd)
-                .offset(x = 100.dp, y = 100.dp)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(accent.copy(alpha = 0.15f), Color.Transparent),
-                        radius = 600f
-                    )
-                )
-        )
-
         Row(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -121,7 +105,7 @@ fun OnboardingScreen(
                 modifier = Modifier
                     .weight(0.4f)
                     .fillMaxHeight()
-                    .background(Color(0xFF0F0F0F))
+                    .background(colorScheme.surface)
                     .padding(32.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
@@ -137,13 +121,13 @@ fun OnboardingScreen(
                         text = "开放启动器",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White,
+                        color = colorScheme.onSurface,
                         letterSpacing = 2.sp,
                         fontSize = 15.sp
                     )
                     Text(
                         text = "为车载仪表盘而设计",
-                        color = Color(0xFF666666),
+                        color = colorScheme.onSurfaceVariant,
                         fontSize = 11.sp,
                         letterSpacing = 0.5.sp
                     )
@@ -159,7 +143,7 @@ fun OnboardingScreen(
 
                 Text(
                     text = "v${BuildConfig.VERSION_NAME}",
-                    color = Color(0xFF333333),
+                    color = colorScheme.outline,
                     fontSize = 9.sp,
                     letterSpacing = 1.sp
                 )
@@ -170,7 +154,7 @@ fun OnboardingScreen(
                 modifier = Modifier
                     .width(1.dp)
                     .fillMaxHeight()
-                    .background(Color(0xFF1E1E1E))
+                    .background(colorScheme.outline.copy(alpha = 0.7f))
             )
 
             // ── Right content wizard ────────────────────────────────────────
@@ -234,12 +218,12 @@ fun OnboardingScreen(
                     if (currentStep > 0) {
                         TextButton(
                             onClick = { currentStep-- },
-                            shape = RoundedCornerShape(10.dp),
+                            shape = MaterialTheme.shapes.small,
                             modifier = Modifier.height(44.dp)
                         ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color(0xFF888888), modifier = Modifier.size(16.dp))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text("返回", color = Color(0xFF888888), fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                            Text("返回", color = colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                         }
                     } else {
                         Spacer(Modifier.width(1.dp))
@@ -273,27 +257,27 @@ fun OnboardingScreen(
                                     onComplete()
                                 }
                             },
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = accent),
+                            shape = MaterialTheme.shapes.small,
+                            colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = colorScheme.onPrimary),
                             modifier = Modifier.height(44.dp)
                         ) {
-                            Text(nextButtonLabel, color = Color.Black, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, fontSize = 12.sp)
+                            Text(nextButtonLabel, color = colorScheme.onPrimary, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, fontSize = 12.sp)
                             Spacer(Modifier.width(8.dp))
-                            Icon(nextButtonIcon, null, tint = Color.Black, modifier = Modifier.size(16.dp))
+                            Icon(nextButtonIcon, null, tint = colorScheme.onPrimary, modifier = Modifier.size(16.dp))
                         }
                     } else {
                         OutlinedButton(
                             onClick = {
                                 currentStep++
                             },
-                            shape = RoundedCornerShape(10.dp),
+                            shape = MaterialTheme.shapes.small,
                             border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = 0.5f)),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = colorScheme.onSurface),
                             modifier = Modifier.height(44.dp)
                         ) {
-                            Text(nextButtonLabel, color = Color.White, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, fontSize = 12.sp)
+                            Text(nextButtonLabel, color = colorScheme.onSurface, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, fontSize = 12.sp)
                             Spacer(Modifier.width(8.dp))
-                            Icon(nextButtonIcon, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            Icon(nextButtonIcon, null, tint = colorScheme.onSurface, modifier = Modifier.size(16.dp))
                         }
                     }
                 }
@@ -308,8 +292,8 @@ private fun StepItem(stepIndex: Int, title: String, currentStep: Int) {
     val completed = stepIndex < currentStep
     val tint = when {
         active -> MaterialTheme.colorScheme.primary
-        completed -> Color(0xFF44AA44)
-        else -> Color(0xFF333333)
+        completed -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.outline
     }
 
     Row(
@@ -319,21 +303,21 @@ private fun StepItem(stepIndex: Int, title: String, currentStep: Int) {
         Box(
             modifier = Modifier
                 .size(16.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(MaterialTheme.shapes.extraSmall)
                 .background(tint.copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
                     .size(6.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(MaterialTheme.shapes.extraSmall)
                     .background(tint)
             )
         }
         Text(
             text = title,
             fontSize = 11.sp,
-            color = if (active) Color.White else Color(0xFF666666),
+            color = if (active) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
             letterSpacing = 0.5.sp
         )
@@ -353,7 +337,7 @@ private fun IntroStep(accent: Color) {
         )
         Text(
             text = "简洁现代的横屏仪表盘，为你的车机屏幕打造。",
-            color = Color(0xFFAAAAAA),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 13.sp,
             lineHeight = 20.sp
         )
@@ -381,7 +365,7 @@ private fun LocationStep(accent: Color, isGranted: Boolean, onGrant: () -> Unit)
         )
         Text(
             text = "为计算实时速度、航向和高度并更新天气，开放启动器需要高精度 GPS。",
-            color = Color(0xFFAAAAAA),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 13.sp,
             lineHeight = 20.sp
         )
@@ -391,8 +375,8 @@ private fun LocationStep(accent: Color, isGranted: Boolean, onGrant: () -> Unit)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(if (isGranted) Color(0xFF0F1E10) else Color(0xFF1E1010))
+                .clip(MaterialTheme.shapes.small)
+                .background(if (isGranted) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.error.copy(alpha = 0.12f))
                 .padding(16.dp)
         ) {
             Row(
@@ -402,19 +386,19 @@ private fun LocationStep(accent: Color, isGranted: Boolean, onGrant: () -> Unit)
                 Icon(
                     imageVector = if (isGranted) Icons.Default.CheckCircle else Icons.Default.Cancel,
                     contentDescription = null,
-                    tint = if (isGranted) Color(0xFF44AA44) else Color(0xFFDD5555),
+                    tint = if (isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(24.dp)
                 )
                 Column {
                     Text(
                         text = if (isGranted) "权限已授予" else "需要权限",
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = if (isGranted) "GPS 遥测已启用" else "遥测当前已禁用",
-                        color = Color(0xFF888888),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 11.sp
                     )
                 }
@@ -425,13 +409,13 @@ private fun LocationStep(accent: Color, isGranted: Boolean, onGrant: () -> Unit)
             Spacer(Modifier.height(16.dp))
             Button(
                 onClick = onGrant,
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = accent),
+                shape = MaterialTheme.shapes.small,
+                colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = MaterialTheme.colorScheme.onPrimary),
                 modifier = Modifier.height(44.dp)
             ) {
-                Icon(Icons.Default.LocationOn, null, tint = Color.Black, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.LocationOn, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("授予权限", color = Color.Black, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, fontSize = 12.sp)
+                Text("授予权限", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, fontSize = 12.sp)
             }
         }
     }
@@ -450,7 +434,7 @@ private fun MediaStep(accent: Color, isGranted: Boolean, onGrant: () -> Unit) {
         )
         Text(
             text = "为显示专辑封面、曲目信息、进度并提供播放控制，开放启动器会监听媒体通知。",
-            color = Color(0xFFAAAAAA),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 13.sp,
             lineHeight = 20.sp
         )
@@ -460,8 +444,8 @@ private fun MediaStep(accent: Color, isGranted: Boolean, onGrant: () -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(if (isGranted) Color(0xFF0F1E10) else Color(0xFF1E1010))
+                .clip(MaterialTheme.shapes.small)
+                .background(if (isGranted) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.error.copy(alpha = 0.12f))
                 .padding(16.dp)
         ) {
             Row(
@@ -471,19 +455,19 @@ private fun MediaStep(accent: Color, isGranted: Boolean, onGrant: () -> Unit) {
                 Icon(
                     imageVector = if (isGranted) Icons.Default.CheckCircle else Icons.Default.Cancel,
                     contentDescription = null,
-                    tint = if (isGranted) Color(0xFF44AA44) else Color(0xFFDD5555),
+                    tint = if (isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(24.dp)
                 )
                 Column {
                     Text(
                         text = if (isGranted) "通知访问已授予" else "需要通知访问",
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = if (isGranted) "音乐播放器组件已连接" else "正在播放组件将保持未激活",
-                        color = Color(0xFF888888),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 11.sp
                     )
                 }
@@ -494,13 +478,13 @@ private fun MediaStep(accent: Color, isGranted: Boolean, onGrant: () -> Unit) {
             Spacer(Modifier.height(16.dp))
             Button(
                 onClick = onGrant,
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = accent),
+                shape = MaterialTheme.shapes.small,
+                colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = MaterialTheme.colorScheme.onPrimary),
                 modifier = Modifier.height(44.dp)
             ) {
-                Icon(Icons.AutoMirrored.Filled.VolumeUp, null, tint = Color.Black, modifier = Modifier.size(16.dp))
+                Icon(Icons.AutoMirrored.Filled.VolumeUp, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("启用媒体监听", color = Color.Black, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, fontSize = 12.sp)
+                Text("启用媒体监听", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, fontSize = 12.sp)
             }
         }
     }
@@ -519,7 +503,7 @@ private fun FinalStep(accent: Color, onSetDefault: () -> Unit) {
         )
         Text(
             text = "设置完成。可将开放启动器设为默认主页，车辆启动时自动打开。",
-            color = Color(0xFFAAAAAA),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 13.sp,
             lineHeight = 20.sp
         )
@@ -528,13 +512,16 @@ private fun FinalStep(accent: Color, onSetDefault: () -> Unit) {
 
         Button(
             onClick = onSetDefault,
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E1E1E)),
+            shape = MaterialTheme.shapes.small,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ),
             modifier = Modifier.height(44.dp)
         ) {
-            Icon(Icons.Default.Home, null, tint = Color.White, modifier = Modifier.size(16.dp))
+            Icon(Icons.Default.Home, null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(8.dp))
-            Text("设为默认", color = Color.White, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, fontSize = 12.sp)
+            Text("设为默认", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, fontSize = 12.sp)
         }
     }
 }
@@ -547,8 +534,8 @@ private fun BulletItem(icon: ImageVector, title: String, desc: String) {
     ) {
         Icon(icon, null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f), modifier = Modifier.size(18.dp).padding(top = 2.dp))
         Column {
-            Text(title, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
-            Text(desc, color = Color(0xFF888888), fontSize = 11.sp, lineHeight = 16.sp)
+            Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
+            Text(desc, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, lineHeight = 16.sp)
         }
     }
 }

@@ -43,12 +43,13 @@ fun TelemetryWidget(
         animationSpec = tween(420),
         label = "compass_smoothing"
     )
-    val contentColor = if (isDayMode) Color(0xFF111111) else MaterialTheme.colorScheme.onBackground
-    val subColor     = if (isDayMode) Color(0xFF888888) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-    val ringColor    = if (isDayMode) Color(0xFFCCCCCC) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f)
-    val cardinalMain = if (isDayMode) Color(0xFF555555) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-    val cardinalSub  = if (isDayMode) Color(0xFF888888) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
-    val arrowColor   = if (isDayMode) Color(0xFF222222) else MaterialTheme.colorScheme.onBackground
+    val contentColor = MaterialTheme.colorScheme.onSurface
+    val subColor     = MaterialTheme.colorScheme.onSurfaceVariant
+    val ringColor    = MaterialTheme.colorScheme.outline.copy(alpha = 0.48f)
+    val cardinalMain = MaterialTheme.colorScheme.onSurface
+    val cardinalSub  = MaterialTheme.colorScheme.onSurfaceVariant
+    val arrowColor   = MaterialTheme.colorScheme.onSurface
+    val pivotColor   = MaterialTheme.colorScheme.outline
     Column(
         modifier = modifier.padding(horizontal = 14.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.SpaceBetween
@@ -95,7 +96,7 @@ fun TelemetryWidget(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text     = "N",
+                        text     = "北",
                         color    = cardinalMain,
                         fontSize = 11.sp,
                         modifier = Modifier
@@ -103,7 +104,7 @@ fun TelemetryWidget(
                             .padding(top = (capturedMaxHeight / 2 - radius - 6.dp).coerceAtLeast(0.dp))
                     )
                     Text(
-                        text     = "S",
+                        text     = "南",
                         color    = cardinalMain,
                         fontSize = 11.sp,
                         modifier = Modifier
@@ -111,7 +112,7 @@ fun TelemetryWidget(
                             .padding(bottom = (capturedMaxHeight / 2 - radius - 6.dp).coerceAtLeast(0.dp))
                     )
                     Text(
-                        text     = "E",
+                        text     = "东",
                         color    = cardinalSub,
                         fontSize = 9.sp,
                         modifier = Modifier
@@ -119,7 +120,7 @@ fun TelemetryWidget(
                             .padding(end = (capturedMaxWidth / 2 - radius - 6.dp).coerceAtLeast(0.dp))
                     )
                     Text(
-                        text     = "W",
+                        text     = "西",
                         color    = cardinalSub,
                         fontSize = 9.sp,
                         modifier = Modifier
@@ -151,7 +152,7 @@ fun TelemetryWidget(
 
                 // Hollow pivot circle
                 drawCircle(
-                    color  = Color(0xFF777777),
+                    color  = pivotColor,
                     radius = 3.dp.toPx(),
                     center = Offset(cx, cy),
                     style  = Stroke(width = 1.5.dp.toPx())
@@ -204,5 +205,5 @@ fun TelemetryWidget(
     }
 }
 
-private fun formatLat(lat: Double) = "%.4f° %s".format(abs(lat), if (lat >= 0) "N" else "S")
-private fun formatLon(lon: Double) = "%.4f° %s".format(abs(lon), if (lon >= 0) "E" else "W")
+private fun formatLat(lat: Double) = "%.4f° %s".format(abs(lat), if (lat >= 0) "北" else "南")
+private fun formatLon(lon: Double) = "%.4f° %s".format(abs(lon), if (lon >= 0) "东" else "西")

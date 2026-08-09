@@ -362,7 +362,7 @@ private fun ShortcutSlot(
                 Icon(
                     imageVector        = Icons.Default.Add,
                     contentDescription = "添加快捷方式",
-                    tint               = if (LocalDayMode.current) Color(0xFFBBBBBB) else Color(0xFF252525),
+                    tint               = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier           = Modifier.size(ICON_SIZE)
                 )
             }
@@ -392,7 +392,7 @@ private fun ShortcutActionDialog(
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f))
             ActionRow("自定义图标", Icons.Default.Palette,   accent, onCustomizeIcon)
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f))
-            ActionRow("移除",             Icons.Default.Delete,     Color(0xFF993333), onRemove)
+            ActionRow("移除",             Icons.Default.Delete,     MaterialTheme.colorScheme.error, onRemove)
         }
     }
 }
@@ -443,7 +443,7 @@ private fun IconPickerDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .background(if (currentOverride == null) accent.copy(alpha = 0.15f) else Color.Transparent)
                         .clickable { onPick(null) }
                         .padding(horizontal = 12.dp, vertical = 10.dp),
@@ -473,7 +473,7 @@ private fun IconPickerDialog(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .aspectRatio(1f)
-                            .clip(RoundedCornerShape(10.dp))
+                            .clip(MaterialTheme.shapes.small)
                             .background(if (isSelected) accent.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surface)
                             .clickable { onPick(iconOption) }
                     ) {

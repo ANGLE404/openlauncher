@@ -96,7 +96,7 @@ fun ColorPickerDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(24.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .background(Brush.horizontalGradient(
                             colors = (0..6).map { i ->
                                 Color(android.graphics.Color.HSVToColor(floatArrayOf(i * 60f, 1f, 1f)))
@@ -117,7 +117,7 @@ fun ColorPickerDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(24.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .background(Brush.horizontalGradient(listOf(
                             Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, 0f, value))),
                             Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, 1f, value)))
@@ -137,7 +137,7 @@ fun ColorPickerDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(24.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .background(Brush.horizontalGradient(listOf(
                             Color.Black,
                             Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, sat, 1f)))
@@ -154,7 +154,7 @@ fun ColorPickerDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(36.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(MaterialTheme.shapes.extraSmall)
                         .background(selectedColor)
                 )
             }

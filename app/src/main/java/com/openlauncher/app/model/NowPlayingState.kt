@@ -10,6 +10,7 @@ data class NowPlayingState(
     // Full-resolution artwork URI when the source app provides one —
     // preferred over the (often downscaled) metadata bitmap
     val artUri: String? = null,
+    val lyrics: String? = null,
     val isPlaying: Boolean,
     val controller: MediaController?
 )

@@ -1,14 +1,19 @@
 package com.openlauncher.app
 
 import com.openlauncher.app.data.shouldEnableLegacyCustomTheme
+import com.openlauncher.app.data.migrateStoredAppFont
 import com.openlauncher.app.data.shouldUseLegacyFontColor
 import com.openlauncher.app.data.shouldUseCustomBackground
 import com.openlauncher.app.data.shouldUseCustomGradient
+import com.openlauncher.app.data.AppFont
 import com.openlauncher.app.model.cachedWeatherAgeLabel
+import com.openlauncher.app.model.extractMediaLyrics
+import com.openlauncher.app.model.hasUsableMediaArtwork
 import com.openlauncher.app.model.isWeatherCacheUsable
 import com.openlauncher.app.model.shouldRefreshWeather
 import com.openlauncher.app.model.weatherCacheRemainingMillis
 import com.openlauncher.app.model.weatherDistanceKm
+import com.openlauncher.app.model.shouldCommitWeatherFetch
 import com.openlauncher.app.util.activeFreshSpeedMpsOrNull
 import com.openlauncher.app.util.freshSpeedMps
 import com.openlauncher.app.util.freshSpeedMpsOrNull
@@ -36,6 +41,21 @@ object RegressionChecks {
             isDayMode = true,
             gradientEndLuminance = 0.01f
         ))
+        check(migrateStoredAppFont("NOTO_SANS_SC") == AppFont.PIXEL)
+        check(migrateStoredAppFont("JETBRAINS_MONO") == AppFont.JETBRAINS_MONO)
+
+        check(hasUsableMediaArtwork(hasBitmap = true, artUri = null))
+        check(hasUsableMediaArtwork(hasBitmap = false, artUri = "content://music/art/42"))
+        check(!hasUsableMediaArtwork(hasBitmap = false, artUri = "   "))
+        check(
+            extractMediaLyrics(
+                mapOf(
+                    "android.media.metadata.title" to "测试曲目",
+                    "com.example.player.lyrics" to "第一行\\n第二行"
+                )
+            ) == "第一行\\n第二行"
+        )
+        check(extractMediaLyrics(mapOf("title" to "测试曲目")) == null)
 
         check(freshSpeedMps(12f, 10_000L, 17_999L) == 12f)
         check(freshSpeedMps(12f, 10_000L, 18_001L) == 0f)
@@ -57,5 +77,7 @@ object RegressionChecks {
         check(!shouldRefreshWeather(now - 10L * 60 * 1_000, now, 0.0, 0.0, 0.01, 0.01))
         check(shouldRefreshWeather(now - 10L * 60 * 1_000, now, 0.0, 0.0, 0.0, 1.0))
         check(shouldRefreshWeather(now - 31L * 60 * 1_000, now, 0.0, 0.0, 0.01, 0.01))
+        check(shouldCommitWeatherFetch(success = true))
+        check(!shouldCommitWeatherFetch(success = false))
     }
 }

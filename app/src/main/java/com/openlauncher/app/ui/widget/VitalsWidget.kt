@@ -9,7 +9,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.openlauncher.app.ui.theme.LauncherPixelShape
 import kotlinx.coroutines.delay
 import java.io.File
 
@@ -38,7 +39,7 @@ fun VitalsWidget(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val labelColor = if (isDayMode) Color(0xFF666666) else androidx.compose.material3.MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f)
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
 
     var cpuUsage by remember { mutableStateOf<Float?>(null) }
     var ramUsedPercent by remember { mutableStateOf<Float?>(null) }
@@ -179,7 +180,6 @@ fun VitalsWidget(
                     label = "处理器",
                     displayValue = cpuUsage?.let { "%.0f%%".format(it) } ?: "不可用",
                     activeColor = cpuColor,
-                    isDayMode = isDayMode,
                     modifier = Modifier.fillMaxWidth()
                 )
                 BarGauge(
@@ -187,7 +187,6 @@ fun VitalsWidget(
                     label = "内存",
                     displayValue = ramDisplayGb,
                     activeColor = ramColor,
-                    isDayMode = isDayMode,
                     modifier = Modifier.fillMaxWidth()
                 )
                 BarGauge(
@@ -195,7 +194,6 @@ fun VitalsWidget(
                     label = temperature.label,
                     displayValue = temperature.value?.let { "%.0f°".format(it) } ?: "不可用",
                     activeColor = tempColor,
-                    isDayMode = isDayMode,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -210,7 +208,6 @@ fun VitalsWidget(
                     label = "处理器",
                     displayValue = cpuUsage?.let { "%.0f%%".format(it) } ?: "不可用",
                     activeColor = cpuColor,
-                    isDayMode = isDayMode,
                     modifier = Modifier.weight(1f).fillMaxHeight()
                 )
 
@@ -219,7 +216,6 @@ fun VitalsWidget(
                     label = "内存",
                     displayValue = ramDisplayGb,
                     activeColor = ramColor,
-                    isDayMode = isDayMode,
                     modifier = Modifier.weight(1f).fillMaxHeight()
                 )
 
@@ -228,7 +224,6 @@ fun VitalsWidget(
                     label = temperature.label,
                     displayValue = temperature.value?.let { "%.0f°".format(it) } ?: "不可用",
                     activeColor = tempColor,
-                    isDayMode = isDayMode,
                     modifier = Modifier.weight(1f).fillMaxHeight()
                 )
             }
@@ -242,12 +237,11 @@ private fun BarGauge(
     label: String,
     displayValue: String,
     activeColor: Color,
-    isDayMode: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val trackColor = if (isDayMode) Color(0xFFD6D6D6) else androidx.compose.material3.MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
-    val contentColor = if (isDayMode) Color(0xFF111111) else androidx.compose.material3.MaterialTheme.colorScheme.onBackground
-    val labelColor = if (isDayMode) Color(0xFF666666) else androidx.compose.material3.MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f)
+    val trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
+    val contentColor = MaterialTheme.colorScheme.onSurface
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
 
     Column(
         modifier = modifier,
@@ -275,14 +269,14 @@ private fun BarGauge(
         Spacer(Modifier.height(3.dp))
         val barBorder = Modifier.border(
             0.5.dp,
-            androidx.compose.material3.MaterialTheme.colorScheme.outline.copy(alpha = if (isDayMode) 0.35f else 0.18f),
-            RoundedCornerShape(8.dp)
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+            LauncherPixelShape
         )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(4.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(LauncherPixelShape)
                 .background(trackColor)
                 .then(barBorder)
         ) {
@@ -302,12 +296,11 @@ private fun DialGauge(
     label: String,
     displayValue: String,
     activeColor: Color,
-    isDayMode: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val trackColor = if (isDayMode) Color(0xFFD6D6D6) else androidx.compose.material3.MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
-    val contentColor = if (isDayMode) Color(0xFF111111) else androidx.compose.material3.MaterialTheme.colorScheme.onBackground
-    val labelColor = if (isDayMode) Color(0xFF666666) else androidx.compose.material3.MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f)
+    val trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
+    val contentColor = MaterialTheme.colorScheme.onSurface
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
 
     BoxWithConstraints(
         modifier = modifier,
@@ -323,18 +316,6 @@ private fun DialGauge(
             Canvas(modifier = Modifier.fillMaxSize().padding(strokeWidth / 2)) {
                 val sw = strokeWidth.toPx()
 
-                // Background track flat outline (light mode)
-                if (isDayMode) {
-                    drawArc(
-                        color = Color.Black.copy(alpha = 0.16f),
-                        startAngle = 148f,
-                        sweepAngle = 244f,
-                        useCenter = false,
-                        style = Stroke(width = sw + 1.dp.toPx(), cap = StrokeCap.Round)
-                    )
-                }
-
-                // Background Track Arc (240 degrees sweep starting at 150 degrees)
                 drawArc(
                     color = trackColor,
                     startAngle = 150f,
@@ -343,19 +324,6 @@ private fun DialGauge(
                     style = Stroke(width = sw, cap = StrokeCap.Round)
                 )
 
-                // Active Value flat outline (light mode)
-                if (isDayMode && value > 0f) {
-                    val sweep = 240f * (value / 100f).coerceIn(0f, 1f)
-                    drawArc(
-                        color = Color.Black.copy(alpha = 0.22f),
-                        startAngle = 149f,
-                        sweepAngle = sweep + 2f,
-                        useCenter = false,
-                        style = Stroke(width = sw + 0.8.dp.toPx(), cap = StrokeCap.Round)
-                    )
-                }
-
-                // Active Value Arc
                 drawArc(
                     color = activeColor,
                     startAngle = 150f,

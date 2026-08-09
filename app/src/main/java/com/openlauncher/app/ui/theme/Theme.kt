@@ -86,7 +86,7 @@ fun OpenLauncherTheme(
                 bold = fontBold,
                 scale = textScale,
                 fontFamily = appFont.toFontFamily(),
-                displayFontFamily = if (appFont == AppFont.PIXEL) PixelFashion16 else appFont.toFontFamily()
+                displayFontFamily = appFont.toFontFamily()
             ),
             shapes      = LauncherShapes,
         ) { content(animatedColors) }

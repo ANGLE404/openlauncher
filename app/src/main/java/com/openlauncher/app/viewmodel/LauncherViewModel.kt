@@ -29,7 +29,9 @@ import com.openlauncher.app.model.AppInfo
 import com.openlauncher.app.model.NavDestination
 import com.openlauncher.app.model.NowPlayingState
 import com.openlauncher.app.model.WeatherState
+import com.openlauncher.app.model.WEATHER_FAILED_FETCH_RETRY_MILLIS
 import com.openlauncher.app.model.isWeatherCacheUsable
+import com.openlauncher.app.model.shouldCommitWeatherFetch
 import com.openlauncher.app.model.shouldRefreshWeather
 import com.openlauncher.app.model.weatherCacheRemainingMillis
 import com.openlauncher.app.model.weatherDistanceKm
@@ -410,10 +412,11 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun fetchWeather(lat: Double, lon: Double, metric: Boolean) {
+    fun fetchWeather(lat: Double, lon: Double, metric: Boolean, onComplete: (Boolean) -> Unit = {}) {
         val requestSequence = ++weatherRequestSequence
         weatherJob?.cancel()
         weatherJob = viewModelScope.launch {
+            var success = false
             try {
                 // Always request celsius — the state stores celsius and the widget
                 // converts for display, so requesting fahrenheit just round-tripped
@@ -433,6 +436,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
                     weatherCacheCoordinates = null
                     weatherCacheExpiryJob?.cancel()
                     settingsRepo.saveWeatherCache(currentWeather, lat, lon)
+                    success = true
                 }
                 _weatherError.value = null
             } catch (e: CancellationException) {
@@ -440,6 +444,10 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
             } catch (e: Exception) {
                 if (requestSequence == weatherRequestSequence) {
                     _weatherError.value = e.message
+                }
+            } finally {
+                if (requestSequence == weatherRequestSequence) {
+                    onComplete(success)
                 }
             }
         }
@@ -475,7 +483,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     val isData: StateFlow<Boolean> = _isData
 
     fun refreshMedia() {
-        MediaListenerService.requestRefresh()
+        MediaListenerService.requestRefresh(getApplication())
     }
 
     // ── Radio ─────────────────────────────────────────────────────────────────
@@ -717,8 +725,10 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         // Fetch weather on first location fix, then every 30 minutes.
         // The minute ticker covers the parked case where no location updates arrive.
         viewModelScope.launch {
-            var lastFetchMs = 0L
-            var lastFetchCoordinates: Pair<Double, Double>? = null
+            var lastSuccessfulFetchMs = 0L
+            var lastSuccessfulFetchCoordinates: Pair<Double, Double>? = null
+            var lastAttemptMs = 0L
+            var lastAttemptCoordinates: Pair<Double, Double>? = null
             merge(
                 locationMgr.location.filterNotNull(),
                 minuteTicker.mapNotNull { locationMgr.location.value }
@@ -733,19 +743,35 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
                         weatherCacheExpiryJob?.cancel()
                     }
                 }
-                val previousCoordinates = lastFetchCoordinates
-                if (shouldRefreshWeather(
-                        lastFetchMillis = lastFetchMs,
+                val previousSuccessfulCoordinates = lastSuccessfulFetchCoordinates
+                val needsFreshWeather = shouldRefreshWeather(
+                        lastFetchMillis = lastSuccessfulFetchMs,
                         nowMillis = now,
-                        lastLatitude = previousCoordinates?.first,
-                        lastLongitude = previousCoordinates?.second,
+                        lastLatitude = previousSuccessfulCoordinates?.first,
+                        lastLongitude = previousSuccessfulCoordinates?.second,
                         currentLatitude = loc.latitude,
                         currentLongitude = loc.longitude
                     )
-                ) {
-                    lastFetchMs = now
-                    lastFetchCoordinates = loc.latitude to loc.longitude
-                    fetchWeather(loc.latitude, loc.longitude, settings.value.unitSystem.name == "METRIC")
+                val previousAttemptCoordinates = lastAttemptCoordinates
+                val retryAllowed = shouldRefreshWeather(
+                    lastFetchMillis = lastAttemptMs,
+                    nowMillis = now,
+                    lastLatitude = previousAttemptCoordinates?.first,
+                    lastLongitude = previousAttemptCoordinates?.second,
+                    currentLatitude = loc.latitude,
+                    currentLongitude = loc.longitude,
+                    refreshIntervalMillis = WEATHER_FAILED_FETCH_RETRY_MILLIS
+                )
+                if (needsFreshWeather && retryAllowed) {
+                    val requestCoordinates = loc.latitude to loc.longitude
+                    lastAttemptMs = now
+                    lastAttemptCoordinates = requestCoordinates
+                    fetchWeather(loc.latitude, loc.longitude, settings.value.unitSystem.name == "METRIC") { succeeded ->
+                        if (shouldCommitWeatherFetch(succeeded)) {
+                            lastSuccessfulFetchMs = System.currentTimeMillis()
+                            lastSuccessfulFetchCoordinates = requestCoordinates
+                        }
+                    }
                 }
             }
         }

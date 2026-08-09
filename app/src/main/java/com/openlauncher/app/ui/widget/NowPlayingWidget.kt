@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.openlauncher.app.model.NowPlayingState
+import com.openlauncher.app.model.hasUsableMediaArtwork
 import com.openlauncher.app.service.MediaListenerService
 import kotlin.math.abs
 import kotlinx.coroutines.delay
@@ -89,7 +90,7 @@ fun NowPlayingWidget(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(MaterialTheme.shapes.small)
     ) {
         // 1. CONDITIONAL VIEW TOGGLE
         if (selectedSource == "FM/AM 收音机") {
@@ -237,8 +238,8 @@ private fun RadioDeck(
             Box(
                 modifier = Modifier
                     .height(26.dp)
-                    .border(1.dp, accent.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
-                    .clip(RoundedCornerShape(8.dp))
+                    .border(1.dp, accent.copy(alpha = 0.6f), MaterialTheme.shapes.extraSmall)
+                    .clip(MaterialTheme.shapes.extraSmall)
                     .clickable { onAssignRadio() }
                     .padding(horizontal = 12.dp),
                 contentAlignment = Alignment.Center
@@ -290,9 +291,9 @@ private fun RadioDeck(
                         Box(
                             modifier = Modifier
                                 .height(22.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(MaterialTheme.shapes.extraSmall)
                                 .background(if (active) chipActiveBg else chipInactiveBg)
-                                .border(1.dp, if (active) borderColor else borderColor.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                .border(1.dp, if (active) borderColor else borderColor.copy(alpha = 0.5f), MaterialTheme.shapes.extraSmall)
                                 .clickable { if (b == "AM") onRadioSwitchAm() else onRadioCycleFm() }
                                 .padding(horizontal = 8.dp),
                             contentAlignment = Alignment.Center
@@ -311,9 +312,9 @@ private fun RadioDeck(
                 Box(
                     modifier = Modifier
                         .height(22.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(MaterialTheme.shapes.extraSmall)
                         .background(chipActiveBg)
-                        .border(1.dp, borderColor, RoundedCornerShape(8.dp))
+                        .border(1.dp, borderColor, MaterialTheme.shapes.extraSmall)
                         .padding(horizontal = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -420,8 +421,8 @@ private fun RadioDeck(
                         modifier = Modifier
                             .weight(1f)
                             .height(28.dp)
-                            .border(1.dp, presetBorderColor, RoundedCornerShape(8.dp))
-                            .clip(RoundedCornerShape(8.dp))
+                            .border(1.dp, presetBorderColor, MaterialTheme.shapes.extraSmall)
+                            .clip(MaterialTheme.shapes.extraSmall)
                             .background(presetBg)
                             .combinedClickable(
                                 enabled = powerOn,
@@ -469,8 +470,8 @@ private fun RadioFlatButton(
     Box(
         modifier = modifier
             .height(28.dp)
-            .border(1.dp, if (active) accent else borderColor, RoundedCornerShape(8.dp))
-            .clip(RoundedCornerShape(8.dp))
+            .border(1.dp, if (active) accent else borderColor, MaterialTheme.shapes.extraSmall)
+            .clip(MaterialTheme.shapes.extraSmall)
             .background(if (active) accent.copy(alpha = 0.15f) else Color.Transparent)
             .clickable(enabled = enabled) { onClick() },
         contentAlignment = Alignment.Center
@@ -539,7 +540,7 @@ private fun StandardMinimalPlayer(
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Icon(Icons.Default.PhoneAndroid, null, tint = accent.copy(alpha = 0.7f), modifier = Modifier.size(28.dp))
-                                    Text("CARPLAY", color = accent.copy(alpha = 0.6f), fontSize = 8.sp, letterSpacing = 2.sp)
+                                    Text("CarPlay", color = accent.copy(alpha = 0.6f), fontSize = 8.sp, letterSpacing = 1.sp)
                                 }
                             }
                         }
@@ -562,7 +563,7 @@ private fun StandardMinimalPlayer(
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Icon(Icons.Default.DirectionsCar, null, tint = accent.copy(alpha = 0.7f), modifier = Modifier.size(28.dp))
-                                    Text("ANDROID AUTO", color = accent.copy(alpha = 0.6f), fontSize = 8.sp, letterSpacing = 2.sp)
+                                    Text("Android Auto", color = accent.copy(alpha = 0.6f), fontSize = 8.sp, letterSpacing = 1.sp)
                                 }
                             }
                         }
@@ -591,7 +592,10 @@ private fun StandardMinimalPlayer(
             }
 
             // Draw Album Art as background with smooth blur overlay if present
-            val hasAlbumArt = nonNullState.albumArt != null
+            val hasAlbumArt = hasUsableMediaArtwork(
+                hasBitmap = nonNullState.albumArt != null,
+                artUri = nonNullState.artUri
+            )
             val currentTextColor = if (hasAlbumArt) Color.White else MaterialTheme.colorScheme.onSurface
             val currentSubTextColor = if (hasAlbumArt) Color.White.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurfaceVariant
             val currentProgressColor = accent
@@ -653,6 +657,16 @@ private fun StandardMinimalPlayer(
                         overflow = TextOverflow.Ellipsis,
                         fontSize = 11.sp
                     )
+                    nonNullState.lyrics?.takeIf { it.isNotBlank() }?.let { lyrics ->
+                        Text(
+                            text = lyrics,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = currentSubTextColor.copy(alpha = 0.82f),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            fontSize = 9.sp
+                        )
+                    }
                 }
 
                 // Progress + controls (bottom)

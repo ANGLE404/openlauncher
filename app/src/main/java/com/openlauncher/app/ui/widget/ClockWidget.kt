@@ -36,13 +36,13 @@ fun ClockWidget(
         }
     }
 
-    val contentColor = if (isDayMode) Color(0xFF111111) else MaterialTheme.colorScheme.onBackground
-    val subColor     = if (isDayMode) Color(0xFF888888) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+    val contentColor = MaterialTheme.colorScheme.onSurface
+    val subColor     = MaterialTheme.colorScheme.onSurfaceVariant
 
     Box(modifier = modifier) {
         when (style) {
             ClockStyle.DIGITAL -> DigitalClock(calendar, contentColor, subColor)
-            ClockStyle.ANALOG  -> AnalogClock(calendar, accent, isDayMode)
+            ClockStyle.ANALOG  -> AnalogClock(calendar, accent)
         }
     }
 }
@@ -53,34 +53,38 @@ private fun DigitalClock(cal: Calendar, contentColor: Color, subColor: Color) {
     val minute = cal.get(Calendar.MINUTE)
 
     Column(
-        modifier            = Modifier.fillMaxSize().padding(start = 14.dp, bottom = 14.dp),
-        verticalArrangement = Arrangement.Bottom,
-        horizontalAlignment = Alignment.Start
+        modifier            = Modifier.fillMaxSize().padding(12.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text          = "%02d:%02d".format(hour, minute),
             color         = contentColor,
             fontSize      = 48.sp,
             fontWeight    = androidx.compose.ui.text.font.FontWeight.Light,
-            letterSpacing = 1.sp
+            letterSpacing = 0.sp
         )
         Text(
             text     = buildDateString(cal),
             color    = subColor,
-            fontSize = 12.sp
+            fontSize = 12.sp,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
 }
 
 @Composable
-private fun AnalogClock(cal: Calendar, accent: Color, isDayMode: Boolean = false) {
+private fun AnalogClock(cal: Calendar, accent: Color) {
     val hour   = cal.get(Calendar.HOUR).toFloat()
     val minute = cal.get(Calendar.MINUTE).toFloat()
     val second = cal.get(Calendar.SECOND).toFloat()
 
-    val ringColor = if (isDayMode) Color(0xFFCCCCCC) else Color(0xFF2A2A2A)
-    val minuteHandColor = if (isDayMode) Color(0xFF222222) else MaterialTheme.colorScheme.onBackground
-    val pivotBg = if (isDayMode) Color(0xFFEEEEEE) else Color(0xFF1E1E1E)
+    val ringColor = MaterialTheme.colorScheme.outline
+    val minuteHandColor = MaterialTheme.colorScheme.onSurface
+    val pivotBg = MaterialTheme.colorScheme.surfaceVariant
+    val hourTickColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.78f)
+    val minorTickColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f)
+    val dateColor = MaterialTheme.colorScheme.onSurfaceVariant
 
     Box(modifier = Modifier.fillMaxSize()) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -109,8 +113,8 @@ private fun AnalogClock(cal: Calendar, accent: Color, isDayMode: Boolean = false
                 drawLine(
                     color       = when {
                         isQuarter -> accent.copy(alpha = 0.9f)
-                        isHour    -> if (isDayMode) Color(0xFF888888) else Color(0xFF555555)
-                        else      -> if (isDayMode) Color(0xFFCCCCCC) else Color(0xFF2E2E2E)
+                        isHour    -> hourTickColor
+                        else      -> minorTickColor
                     },
                     start       = Offset(cx + cos(angle) * radius * inner, cy + sin(angle) * radius * inner),
                     end         = Offset(cx + cos(angle) * radius * 0.96f, cy + sin(angle) * radius * 0.96f),
@@ -162,7 +166,7 @@ private fun AnalogClock(cal: Calendar, accent: Color, isDayMode: Boolean = false
         // Date inset — centered, above 6 o'clock position like a real watch
         Text(
             text      = shortDateString(cal),
-            color     = if (isDayMode) Color(0xFF999999) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+            color     = dateColor,
             fontSize  = 9.sp,
             letterSpacing = 1.5.sp,
             modifier  = Modifier

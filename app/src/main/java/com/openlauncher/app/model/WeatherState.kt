@@ -30,7 +30,10 @@ data class CachedWeather(
 
 const val WEATHER_CACHE_MAX_AGE_MILLIS = 12L * 60 * 60 * 1_000
 const val WEATHER_REFRESH_INTERVAL_MILLIS = 30L * 60 * 1_000
+const val WEATHER_FAILED_FETCH_RETRY_MILLIS = 5L * 60 * 1_000
 const val WEATHER_RELOCATION_DISTANCE_KM = 50.0
+
+fun shouldCommitWeatherFetch(success: Boolean): Boolean = success
 
 fun isWeatherCacheUsable(
     savedAtMillis: Long,

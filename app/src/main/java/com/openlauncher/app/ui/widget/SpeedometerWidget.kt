@@ -30,13 +30,13 @@ fun SpeedometerWidget(
     val maxSpeed     = if (isMetric) 200f else 124f
     val speedDisplay = ((location?.speedMps ?: 0f) * if (isMetric) 3.6f else 2.237f).coerceAtLeast(0f)
     val unitLabel    = if (isMetric) "KM/H" else "MPH"
-    val trackAlpha   = if (isDayMode) 0.18f else 0.07f
-    val tickAlphaMaj = if (isDayMode) 0.50f else 0.28f
-    val tickAlphaMin = if (isDayMode) 0.25f else 0.13f
+    val trackAlpha   = 0.14f
+    val tickAlphaMaj = 0.56f
+    val tickAlphaMin = 0.30f
 
-    val contentColor = if (isDayMode) Color(0xFF111111) else MaterialTheme.colorScheme.onBackground
-    val subAlpha     = if (isDayMode) 0.55f else 0.32f
-    val tickBaseColor = if (isDayMode) Color(0xFF222222) else MaterialTheme.colorScheme.onBackground
+    val contentColor = MaterialTheme.colorScheme.onSurface
+    val subAlpha     = 0.58f
+    val tickBaseColor = MaterialTheme.colorScheme.outline
 
     Box(
         modifier         = modifier,
@@ -53,7 +53,7 @@ fun SpeedometerWidget(
                     color         = contentColor,
                     fontSize      = 54.sp,
                     fontWeight    = androidx.compose.ui.text.font.FontWeight.SemiBold,
-                    letterSpacing = (-1.5).sp
+                    letterSpacing = 0.sp
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
@@ -122,7 +122,7 @@ fun SpeedometerWidget(
                     text          = "%.0f".format(speedDisplay),
                     color         = contentColor,
                     fontSize      = 34.sp,
-                    letterSpacing = (-1).sp
+                    letterSpacing = 0.sp
                 )
                 Text(
                     text          = unitLabel,

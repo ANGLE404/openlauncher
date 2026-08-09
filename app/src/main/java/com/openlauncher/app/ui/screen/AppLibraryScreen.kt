@@ -28,10 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import com.openlauncher.app.model.AppInfo
+import com.openlauncher.app.ui.theme.LauncherControlShape
 
 private enum class AppFilter { USER, SYSTEM, ALL }
 
-private val TILE_RADIUS = RoundedCornerShape(10.dp)
+private val TILE_RADIUS = LauncherControlShape
 
 @Composable
 fun AppLibraryScreen(
@@ -124,8 +125,8 @@ fun AppLibraryScreen(
                 modifier = Modifier
                     .width(200.dp)
                     .height(36.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .border(1.dp, if (searchFocused) accent else fieldBorderU, RoundedCornerShape(10.dp))
+                    .clip(LauncherControlShape)
+                    .border(1.dp, if (searchFocused) accent else fieldBorderU, LauncherControlShape)
                     .padding(horizontal = 10.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {

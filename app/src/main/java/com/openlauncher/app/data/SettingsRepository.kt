@@ -133,7 +133,7 @@ class SettingsRepository(private val context: Context) {
                 uiScale        = prefs[Keys.UI_SCALE]         ?: defaults.uiScale,
                 clockStyle     = prefs[Keys.CLOCK_STYLE]?.let { runCatching { ClockStyle.valueOf(it) }.getOrNull() } ?: defaults.clockStyle,
                 unitSystem     = prefs[Keys.UNIT_SYSTEM]?.let { runCatching { UnitSystem.valueOf(it) }.getOrNull() } ?: defaults.unitSystem,
-                appFont        = prefs[Keys.APP_FONT]?.let { runCatching { AppFont.valueOf(it) }.getOrNull() } ?: defaults.appFont,
+                appFont        = migrateStoredAppFont(prefs[Keys.APP_FONT]) ?: defaults.appFont,
                 showWeather    = prefs[Keys.SHOW_WEATHER]     ?: defaults.showWeather,
                 showClock      = prefs[Keys.SHOW_CLOCK]       ?: defaults.showClock,
                 showTelemetry  = prefs[Keys.SHOW_TELEMETRY]   ?: defaults.showTelemetry,

@@ -14,6 +14,11 @@ fun shouldUseLegacyFontColor(
 ): Boolean = (storedSchemaVersion ?: 0) < CURRENT_THEME_SCHEMA_VERSION &&
     storedFontColor?.let { it != defaultFontColor } == true
 
+fun migrateStoredAppFont(storedValue: String?): AppFont? = when (storedValue) {
+    AppFont.NOTO_SANS_SC.name -> AppFont.PIXEL
+    else -> storedValue?.let { value -> runCatching { AppFont.valueOf(value) }.getOrNull() }
+}
+
 fun shouldUseCustomBackground(
     isDayMode: Boolean,
     useFullCustomTheme: Boolean,
