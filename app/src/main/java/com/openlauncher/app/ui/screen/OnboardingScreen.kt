@@ -35,7 +35,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.openlauncher.app.BuildConfig
 import com.openlauncher.app.data.AppSettings
-import com.openlauncher.app.service.MediaListenerService
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -58,8 +57,10 @@ fun OnboardingScreen(
             context, Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
-        mediaGranted = MediaListenerService.hasNotificationAccess(context)
-        if (mediaGranted) MediaListenerService.requestRefresh(context)
+        val enabledListeners = Settings.Secure.getString(
+            context.contentResolver, "enabled_notification_listeners"
+        )
+        mediaGranted = enabledListeners != null && enabledListeners.contains(context.packageName)
     }
 
     DisposableEffect(lifecycleOwner) {

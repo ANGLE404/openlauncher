@@ -13,7 +13,7 @@
 
 开放启动器专为后装安卓车机设计，重点是清晰、稳定、离线可用和可定制。它不依赖持续网络连接，适合安装在不同分辨率、不同硬件方案的车机设备上。
 
-当前版本为 **v1.0.3.1**，由 **ayc404** 完成中文化和精致像素风现代化优化。
+当前版本为 **v1.0.3.2**，由 **ayc404** 完成中文化和精致像素风现代化优化。
 
 ## 主要特性
 
@@ -25,7 +25,7 @@
 
 ### 车载仪表组件
 
-- **媒体播放器**：显示曲目、专辑封面、进度、歌词元数据和播放控制；兼容 Bitmap 与 URI 两种封面来源
+- **媒体播放器**：显示曲目、专辑封面、进度和播放控制
 - **AM/FM 收音机**：兼容 Choiceway/szchoiceway MCU，或映射能暴露 MediaSession 的车机收音机应用
 - **速度表**：使用 GPS 提供独立速度显示
 - **高度计**：显示实时海拔
@@ -97,8 +97,8 @@ app/build/outputs/apk/release/app-release-unsigned.apk
 版本号统一维护在 `version.properties`：
 
 ```properties
-VERSION_NAME=1.0.3.1
-VERSION_CODE=10031
+VERSION_NAME=1.0.3.2
+VERSION_CODE=10032
 ```
 
 Gradle、APK 清单、设置页和首次启动页都会读取这一版本源。发布新版本时同步递增 `VERSION_NAME` 和 `VERSION_CODE`，并使用 `v<版本号>-ayc404` 创建 Git 标签。

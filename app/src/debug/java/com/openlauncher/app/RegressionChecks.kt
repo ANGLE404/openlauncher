@@ -7,8 +7,6 @@ import com.openlauncher.app.data.shouldUseCustomBackground
 import com.openlauncher.app.data.shouldUseCustomGradient
 import com.openlauncher.app.data.AppFont
 import com.openlauncher.app.model.cachedWeatherAgeLabel
-import com.openlauncher.app.model.extractMediaLyrics
-import com.openlauncher.app.model.hasUsableMediaArtwork
 import com.openlauncher.app.model.isWeatherCacheUsable
 import com.openlauncher.app.model.shouldRefreshWeather
 import com.openlauncher.app.model.weatherCacheRemainingMillis
@@ -43,19 +41,6 @@ object RegressionChecks {
         ))
         check(migrateStoredAppFont("NOTO_SANS_SC") == AppFont.PIXEL)
         check(migrateStoredAppFont("JETBRAINS_MONO") == AppFont.JETBRAINS_MONO)
-
-        check(hasUsableMediaArtwork(hasBitmap = true, artUri = null))
-        check(hasUsableMediaArtwork(hasBitmap = false, artUri = "content://music/art/42"))
-        check(!hasUsableMediaArtwork(hasBitmap = false, artUri = "   "))
-        check(
-            extractMediaLyrics(
-                mapOf(
-                    "android.media.metadata.title" to "测试曲目",
-                    "com.example.player.lyrics" to "第一行\\n第二行"
-                )
-            ) == "第一行\\n第二行"
-        )
-        check(extractMediaLyrics(mapOf("title" to "测试曲目")) == null)
 
         check(freshSpeedMps(12f, 10_000L, 17_999L) == 12f)
         check(freshSpeedMps(12f, 10_000L, 18_001L) == 0f)

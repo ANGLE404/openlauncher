@@ -148,16 +148,6 @@ fun SettingsScreen(
                     home, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY
                 )?.activityInfo?.packageName == context.packageName
             }
-            val hasMediaAccess = remember(permissionRefresh) {
-                com.openlauncher.app.service.MediaListenerService.hasNotificationAccess(context)
-            }
-
-            LaunchedEffect(hasMediaAccess) {
-                if (hasMediaAccess) {
-                    com.openlauncher.app.service.MediaListenerService.requestRefresh(context)
-                }
-            }
-
             val homeRoleLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.StartActivityForResult()
             ) { permissionRefresh++ }
@@ -207,18 +197,10 @@ fun SettingsScreen(
             SettingsDivider()
             SettingsButton(
                 label    = "通知访问",
-                sublabel = when {
-                    isMediaConnected -> "已连接，封面、歌词和播放控制已启用"
-                    hasMediaAccess -> "已授权，正在重新连接媒体服务"
-                    else -> "正在播放组件所需"
-                },
+                sublabel = if (isMediaConnected) "已授予，媒体控制已启用" else "正在播放组件所需",
                 icon     = if (isMediaConnected) Icons.Default.NotificationsActive else Icons.Default.NotificationsOff,
-                accent   = if (hasMediaAccess) accent else MaterialTheme.colorScheme.error,
+                accent   = if (isMediaConnected) accent else MaterialTheme.colorScheme.error,
                 onClick  = {
-                    if (hasMediaAccess) {
-                        com.openlauncher.app.service.MediaListenerService.requestRefresh(context)
-                        return@SettingsButton
-                    }
                     val notificationSettings = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
                     val intent = notificationSettings.takeIf { it.resolveActivity(context.packageManager) != null }
                         ?: Intent(Settings.ACTION_SETTINGS)

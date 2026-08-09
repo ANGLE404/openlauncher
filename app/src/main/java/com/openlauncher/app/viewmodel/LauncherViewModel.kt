@@ -483,7 +483,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     val isData: StateFlow<Boolean> = _isData
 
     fun refreshMedia() {
-        MediaListenerService.requestRefresh(getApplication())
+        MediaListenerService.requestRefresh()
     }
 
     // ── Radio ─────────────────────────────────────────────────────────────────

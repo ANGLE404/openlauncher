@@ -1,19 +1,15 @@
 package com.openlauncher.app.service
 
 import android.content.ComponentName
-import android.content.Context
 import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
-import android.os.Build
 import android.media.session.PlaybackState
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.openlauncher.app.model.NowPlayingState
-import com.openlauncher.app.model.extractMediaLyrics
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import androidx.core.app.NotificationManagerCompat
 
 class MediaListenerService : NotificationListenerService() {
 
@@ -45,7 +41,6 @@ class MediaListenerService : NotificationListenerService() {
 
     override fun onDestroy() {
         instance = null
-        isConnected.value = false
         clearController()
         // Clear the static flow so the UI doesn't keep showing a dead session
         // (and pinning its album-art bitmap) after the service is killed
@@ -95,7 +90,7 @@ class MediaListenerService : NotificationListenerService() {
         val meta = controller.metadata
         val title = meta?.getString(MediaMetadata.METADATA_KEY_TITLE)
             ?: meta?.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE)
-            ?: "未知曲目"
+            ?: "Unknown"
         val artist = meta?.getString(MediaMetadata.METADATA_KEY_ARTIST)
             ?: meta?.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)
             ?: meta?.getString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE)
@@ -112,9 +107,6 @@ class MediaListenerService : NotificationListenerService() {
         val artUri = meta?.getString(MediaMetadata.METADATA_KEY_ART_URI)
             ?: meta?.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI)
             ?: meta?.getString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI)
-        val lyrics = meta?.keySet()
-            ?.associateWith { key -> runCatching { meta.getText(key) }.getOrNull() }
-            ?.let(::extractMediaLyrics)
         val isPlaying = controller.playbackState?.state == PlaybackState.STATE_PLAYING
 
         // Skip redundant emissions: metadata bitmaps parcel into fresh instances on
@@ -125,7 +117,6 @@ class MediaListenerService : NotificationListenerService() {
             prev.controller?.sessionToken == controller.sessionToken &&
             prev.title == title && prev.artist == artist &&
             prev.isPlaying == isPlaying && prev.artUri == artUri &&
-            prev.lyrics == lyrics &&
             (prev.albumArt != null) == (art != null)
         ) return
 
@@ -134,7 +125,6 @@ class MediaListenerService : NotificationListenerService() {
             artist     = artist,
             albumArt   = art,
             artUri     = artUri,
-            lyrics     = lyrics,
             isPlaying  = isPlaying,
             controller = controller
         )
@@ -146,16 +136,6 @@ class MediaListenerService : NotificationListenerService() {
         val isConnected = MutableStateFlow(false)
 
         @Volatile private var instance: MediaListenerService? = null
-
-        fun hasNotificationAccess(context: Context): Boolean =
-            NotificationManagerCompat.getEnabledListenerPackages(context)
-                .contains(context.packageName)
-
-        fun requestRefresh(context: Context) {
-            if (instance == null && hasNotificationAccess(context) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                requestRebind(ComponentName(context, MediaListenerService::class.java))
-            }
-            instance?.refreshNowPlaying()
-        }
+        fun requestRefresh() { instance?.refreshNowPlaying() }
     }
 }
