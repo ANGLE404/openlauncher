@@ -1203,6 +1203,8 @@ private fun sliderColors(accent: Color): androidx.compose.material3.SliderColors
 
 private fun fontDisplayName(font: AppFont): String = when (font) {
     AppFont.PIXEL          -> "精品点阵体 9×9"
+    AppFont.FASHION_BITMAP_16 -> "FashionBitmap16 16×16"
+    AppFont.CHILL_BITMAP_7X   -> "ChillBitmap 7×"
     AppFont.SYSTEM          -> "系统字体"
     AppFont.NOTO_SANS_SC    -> "思源黑体（Noto Sans SC）"
     AppFont.JETBRAINS_MONO  -> "极客等宽体（JetBrains Mono）"

@@ -41,6 +41,8 @@ object RegressionChecks {
         ))
         check(migrateStoredAppFont("NOTO_SANS_SC") == AppFont.PIXEL)
         check(migrateStoredAppFont("JETBRAINS_MONO") == AppFont.JETBRAINS_MONO)
+        check(migrateStoredAppFont("FASHION_BITMAP_16") == AppFont.FASHION_BITMAP_16)
+        check(migrateStoredAppFont("CHILL_BITMAP_7X") == AppFont.CHILL_BITMAP_7X)
 
         check(freshSpeedMps(12f, 10_000L, 17_999L) == 12f)
         check(freshSpeedMps(12f, 10_000L, 18_001L) == 0f)

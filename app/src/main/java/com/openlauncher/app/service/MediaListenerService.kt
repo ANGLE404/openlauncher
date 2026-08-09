@@ -5,6 +5,8 @@ import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
+import android.os.Handler
+import android.os.Looper
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.openlauncher.app.model.NowPlayingState
@@ -14,6 +16,13 @@ import kotlinx.coroutines.flow.StateFlow
 class MediaListenerService : NotificationListenerService() {
 
     private var activeController: MediaController? = null
+    private var mediaSessionManager: MediaSessionManager? = null
+
+    private val activeSessionsListener = object : MediaSessionManager.OnActiveSessionsChangedListener {
+        override fun onActiveSessionsChanged(controllers: MutableList<MediaController>?) {
+            refreshNowPlaying()
+        }
+    }
 
     private val controllerCallback = object : MediaController.Callback() {
         override fun onPlaybackStateChanged(state: PlaybackState?) = refreshNowPlaying()
@@ -25,6 +34,8 @@ class MediaListenerService : NotificationListenerService() {
         super.onListenerConnected()
         instance = this
         isConnected.value = true
+        mediaSessionManager = getSystemService(MEDIA_SESSION_SERVICE) as? MediaSessionManager
+        registerActiveSessionsListener()
         refreshNowPlaying()
     }
 
@@ -32,6 +43,7 @@ class MediaListenerService : NotificationListenerService() {
         super.onListenerDisconnected()
         instance = null
         isConnected.value = false
+        unregisterActiveSessionsListener()
         clearController()
         _nowPlaying.value = null
     }
@@ -41,7 +53,10 @@ class MediaListenerService : NotificationListenerService() {
 
     override fun onDestroy() {
         instance = null
+        isConnected.value = false
+        unregisterActiveSessionsListener()
         clearController()
+        mediaSessionManager = null
         // Clear the static flow so the UI doesn't keep showing a dead session
         // (and pinning its album-art bitmap) after the service is killed
         _nowPlaying.value = null
@@ -49,12 +64,32 @@ class MediaListenerService : NotificationListenerService() {
     }
 
     private fun clearController() {
-        activeController?.unregisterCallback(controllerCallback)
+        runCatching { activeController?.unregisterCallback(controllerCallback) }
         activeController = null
     }
 
+    private fun registerActiveSessionsListener() {
+        val manager = mediaSessionManager ?: return
+        unregisterActiveSessionsListener()
+        runCatching {
+            manager.addOnActiveSessionsChangedListener(
+                activeSessionsListener,
+                ComponentName(this, MediaListenerService::class.java),
+                Handler(Looper.getMainLooper())
+            )
+        }
+    }
+
+    private fun unregisterActiveSessionsListener() {
+        runCatching { mediaSessionManager?.removeOnActiveSessionsChangedListener(activeSessionsListener) }
+    }
+
     private fun refreshNowPlaying() {
-        val msm = getSystemService(MEDIA_SESSION_SERVICE) as? MediaSessionManager ?: return
+        val msm = mediaSessionManager
+            ?: (getSystemService(MEDIA_SESSION_SERVICE) as? MediaSessionManager)?.also {
+                mediaSessionManager = it
+            }
+            ?: return
         val sessions: List<MediaController> = try {
             msm.getActiveSessions(ComponentName(this, MediaListenerService::class.java))
         } catch (_: SecurityException) {
@@ -76,10 +111,9 @@ class MediaListenerService : NotificationListenerService() {
         if (active.sessionToken != activeController?.sessionToken) {
             clearController()
             activeController = active
-            active.registerCallback(
-                controllerCallback,
-                android.os.Handler(android.os.Looper.getMainLooper())
-            )
+            runCatching {
+                active.registerCallback(controllerCallback, Handler(Looper.getMainLooper()))
+            }
         }
 
         updateFromController(activeController)

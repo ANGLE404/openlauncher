@@ -43,10 +43,18 @@ val PixelFashion16 = FontFamily(
     Font(R.font.fashion_bitmap_16, FontWeight.Bold),
 )
 
+val PixelChill7x = FontFamily(
+    Font(R.font.chill_bitmap_7x, FontWeight.Normal),
+    Font(R.font.chill_bitmap_7x, FontWeight.Medium),
+    Font(R.font.chill_bitmap_7x, FontWeight.Bold),
+)
+
 val PixelNumeric = PixelBitmap9x9
 
 fun AppFont.toFontFamily(): FontFamily = when (this) {
     AppFont.PIXEL          -> PixelBitmap9x9
+    AppFont.FASHION_BITMAP_16 -> PixelFashion16
+    AppFont.CHILL_BITMAP_7X   -> PixelChill7x
     AppFont.SYSTEM          -> FontFamily.Default
     AppFont.NOTO_SANS_SC    -> NotoSansSC
     AppFont.JETBRAINS_MONO  -> JetBrainsMono

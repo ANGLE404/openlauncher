@@ -16,6 +16,11 @@
     <!-- Required for LocationManager.sendExtraCommand (A-GPS reset) — normal protection, auto-granted -->
     <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS" />
 
+    <!-- MediaSessionManager fallback on head-unit ROMs (notification access is still required) -->
+    <uses-permission
+        android:name="android.permission.MEDIA_CONTENT_CONTROL"
+        tools:ignore="ProtectedPermissions" />
+
     <!-- Query all packages required on API 30+ for getInstalledApplications -->
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"

@@ -5,7 +5,15 @@ import androidx.compose.ui.graphics.toArgb
 
 enum class ClockStyle { DIGITAL, ANALOG }
 enum class UnitSystem { METRIC, IMPERIAL }
-enum class AppFont { PIXEL, SYSTEM, NOTO_SANS_SC, JETBRAINS_MONO, SOURCE_CODE_PRO }
+enum class AppFont {
+    PIXEL,
+    FASHION_BITMAP_16,
+    CHILL_BITMAP_7X,
+    SYSTEM,
+    NOTO_SANS_SC,
+    JETBRAINS_MONO,
+    SOURCE_CODE_PRO
+}
 enum class DashboardTheme { ICE_BLUE, TRACK_ORANGE, ALERT_RED, AURORA_GREEN, NEON_PURPLE }
 enum class DashboardStyle { OEM, CYBER, GLASS }
 enum class DayNightMode { DARK, LIGHT, AUTO, SYSTEM }
