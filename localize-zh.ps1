@@ -1,3 +1,14 @@
+$versionProperties = @{}
+Get-Content "$PSScriptRoot\version.properties" | ForEach-Object {
+    if ($_ -match '^\s*([^#][^=]*)=(.*)$') {
+        $versionProperties[$matches[1].Trim()] = $matches[2].Trim()
+    }
+}
+$releaseVersionName = $versionProperties['VERSION_NAME']
+if ([string]::IsNullOrWhiteSpace($releaseVersionName)) {
+    throw 'version.properties 中缺少 VERSION_NAME'
+}
+
 $pairs = @'
 OPEN LAUNCHER	开放启动器
 Designed for the dashboard	为车载仪表盘而设计
@@ -200,7 +211,6 @@ AVG SPEED // SPD	平均速度 // 速度
 DISTANCE // DIST	距离 // 距离
 ACCEL TEST // 0-100	加速测试 // 0-100
 ACCEL TEST // 0-60	加速测试 // 0-60
-v0.0.5  ·  Made by David Lam  ·  2026	v0.0.5  ·  David Lam 制作  ·  2026
 '@ -split "`r?`n"
 
 $map = @{}
@@ -209,6 +219,7 @@ foreach ($line in $pairs) {
     $parts = $line -split "`t", 2
     $map[$parts[0]] = $parts[1]
 }
+$map['v0.0.5  ·  Made by David Lam  ·  2026'] = "v$releaseVersionName  ·  ayc404 制作  ·  2026"
 
 $internalKeys = @(
     'CLOCK', 'WEATHER', 'TELEMETRY', 'SPEEDOMETER', 'ALTIMETER', 'SOUNDBOARD',

@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import java.io.File
 
+private data class TemperatureReading(val value: Float?, val label: String)
+
 @Composable
 fun VitalsWidget(
     accent: Color,
@@ -38,17 +40,17 @@ fun VitalsWidget(
     val context = LocalContext.current
     val labelColor = if (isDayMode) Color(0xFF666666) else androidx.compose.material3.MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f)
 
-    var cpuUsage by remember { mutableFloatStateOf(20f) }
-    var ramUsedPercent by remember { mutableFloatStateOf(45f) }
+    var cpuUsage by remember { mutableStateOf<Float?>(null) }
+    var ramUsedPercent by remember { mutableStateOf<Float?>(null) }
     var ramDisplayGb by remember { mutableStateOf("0.0G") }
-    var temperature by remember { mutableFloatStateOf(35f) }
+    var temperature by remember { mutableStateOf(TemperatureReading(null, "温度")) }
 
     // CPU Stat Tracking variables
     var lastCpuTime by remember { mutableLongStateOf(0L) }
     var lastIdleTime by remember { mutableLongStateOf(0L) }
 
     // Temperature tracking helper (Thermal files -> Battery fallback)
-    val getCpuTemp = {
+    val getTemperatureReading = {
         val paths = listOf(
             "/sys/class/thermal/thermal_zone0/temp",
             "/sys/class/thermal/thermal_zone1/temp",
@@ -71,20 +73,16 @@ fun VitalsWidget(
             } catch (_: Exception) {}
         }
         
-        if (foundTemp == -1f) {
-            // Fallback: Battery Temp
-            try {
+        if (foundTemp != -1f) {
+            TemperatureReading(foundTemp, "设备温度")
+        } else {
+            val batteryTemperature = runCatching {
                 val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-                if (intent != null) {
-                    val rawTemp = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0)
-                    if (rawTemp > 0) {
-                        foundTemp = rawTemp / 10f
-                    }
-                }
-            } catch (_: Exception) {}
+                val rawTemp = intent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0
+                if (rawTemp > 0) rawTemp / 10f else null
+            }.getOrNull()
+            TemperatureReading(batteryTemperature, if (batteryTemperature != null) "电池温度" else "温度不可用")
         }
-        
-        if (foundTemp != -1f) foundTemp else 38f // global default fallback
     }
 
     // Process RAM telemetry
@@ -101,7 +99,7 @@ fun VitalsWidget(
             ramUsedPercent = ((usedGb / totalGb) * 100f).toFloat().coerceIn(0f, 100f)
             ramDisplayGb = "%.1fG".format(usedGb)
         } catch (_: Exception) {
-            ramUsedPercent = 50f
+            ramUsedPercent = null
             ramDisplayGb = "—"
         }
     }
@@ -140,14 +138,10 @@ fun VitalsWidget(
                     }
                 }
             }
-            if (!updated) {
-                // Android 8+ SELinux fallback: realistic organic load generator using active threads & mathematical noise
-                val activeThreads = Thread.activeCount().coerceIn(10, 150)
-                val baseLoad = (activeThreads / 150f) * 35f
-                val noise = (Math.sin(System.currentTimeMillis() / 4000.0) * 12.0).toFloat()
-                cpuUsage = (baseLoad + 20f + noise).coerceIn(5f, 95f)
-            }
-        } catch (_: Exception) {}
+            if (!updated) cpuUsage = null
+        } catch (_: Exception) {
+            cpuUsage = null
+        }
     }
 
     // Periodic polling loop — the /proc and /sys reads are file I/O, so they
@@ -157,16 +151,19 @@ fun VitalsWidget(
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 updateCpu()
                 updateRam()
-                temperature = getCpuTemp()
+                temperature = getTemperatureReading()
             }
             delay(2500)
         }
     }
 
     // Warning colors for diagnostics
-    val cpuColor = if (cpuUsage > 85f) Color(0xFFDD5555) else if (cpuUsage > 65f) Color(0xFFE6A23C) else accent
-    val ramColor = if (ramUsedPercent > 90f) Color(0xFFDD5555) else if (ramUsedPercent > 75f) Color(0xFFE6A23C) else accent
-    val tempColor = if (temperature > 75f) Color(0xFFDD5555) else if (temperature > 60f) Color(0xFFE6A23C) else accent
+    val cpuValue = cpuUsage ?: 0f
+    val ramValue = ramUsedPercent ?: 0f
+    val temperatureValue = temperature.value ?: 0f
+    val cpuColor = if (cpuValue > 85f) Color(0xFFDD5555) else if (cpuValue > 65f) Color(0xFFE6A23C) else accent
+    val ramColor = if (ramValue > 90f) Color(0xFFDD5555) else if (ramValue > 75f) Color(0xFFE6A23C) else accent
+    val tempColor = if (temperatureValue > 75f) Color(0xFFDD5555) else if (temperatureValue > 60f) Color(0xFFE6A23C) else accent
 
     Column(
         modifier = modifier.padding(start = 14.dp, end = 14.dp, top = 22.dp, bottom = 8.dp),
@@ -178,15 +175,15 @@ fun VitalsWidget(
                 verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
             ) {
                 BarGauge(
-                    value = cpuUsage,
+                    value = cpuValue,
                     label = "处理器",
-                    displayValue = "%.0f%%".format(cpuUsage),
+                    displayValue = cpuUsage?.let { "%.0f%%".format(it) } ?: "不可用",
                     activeColor = cpuColor,
                     isDayMode = isDayMode,
                     modifier = Modifier.fillMaxWidth()
                 )
                 BarGauge(
-                    value = ramUsedPercent,
+                    value = ramValue,
                     label = "内存",
                     displayValue = ramDisplayGb,
                     activeColor = ramColor,
@@ -194,9 +191,9 @@ fun VitalsWidget(
                     modifier = Modifier.fillMaxWidth()
                 )
                 BarGauge(
-                    value = temperature,
-                    label = "温度",
-                    displayValue = "%.0f°".format(temperature),
+                    value = temperatureValue,
+                    label = temperature.label,
+                    displayValue = temperature.value?.let { "%.0f°".format(it) } ?: "不可用",
                     activeColor = tempColor,
                     isDayMode = isDayMode,
                     modifier = Modifier.fillMaxWidth()
@@ -209,16 +206,16 @@ fun VitalsWidget(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 DialGauge(
-                    value = cpuUsage,
+                    value = cpuValue,
                     label = "处理器",
-                    displayValue = "%.0f%%".format(cpuUsage),
+                    displayValue = cpuUsage?.let { "%.0f%%".format(it) } ?: "不可用",
                     activeColor = cpuColor,
                     isDayMode = isDayMode,
                     modifier = Modifier.weight(1f).fillMaxHeight()
                 )
 
                 DialGauge(
-                    value = ramUsedPercent,
+                    value = ramValue,
                     label = "内存",
                     displayValue = ramDisplayGb,
                     activeColor = ramColor,
@@ -227,9 +224,9 @@ fun VitalsWidget(
                 )
 
                 DialGauge(
-                    value = temperature,
-                    label = "温度",
-                    displayValue = "%.0f°".format(temperature),
+                    value = temperatureValue,
+                    label = temperature.label,
+                    displayValue = temperature.value?.let { "%.0f°".format(it) } ?: "不可用",
                     activeColor = tempColor,
                     isDayMode = isDayMode,
                     modifier = Modifier.weight(1f).fillMaxHeight()
@@ -276,7 +273,11 @@ private fun BarGauge(
             )
         }
         Spacer(Modifier.height(3.dp))
-        val barBorder = if (isDayMode) Modifier.border(0.5.dp, Color.Black.copy(alpha = 0.08f), RoundedCornerShape(8.dp)) else Modifier
+        val barBorder = Modifier.border(
+            0.5.dp,
+            androidx.compose.material3.MaterialTheme.colorScheme.outline.copy(alpha = if (isDayMode) 0.35f else 0.18f),
+            RoundedCornerShape(8.dp)
+        )
         Box(
             modifier = Modifier
                 .fillMaxWidth()

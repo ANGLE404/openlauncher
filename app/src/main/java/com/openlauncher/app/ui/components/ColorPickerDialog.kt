@@ -47,17 +47,21 @@ fun ColorPickerDialog(
         hue = hsv[0]; sat = hsv[1]; value = hsv[2]
     }
 
+    val surfaceColor = MaterialTheme.colorScheme.surfaceVariant
+    val contentColor = MaterialTheme.colorScheme.onSurface
+    val secondaryColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val outlineColor = MaterialTheme.colorScheme.outline
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        // Always-dark surface: pin light content colors so day mode stays legible
-        containerColor    = Color(0xFF1A1A1A),
-        titleContentColor = Color.White,
-        textContentColor  = Color(0xFFCCCCCC),
+        containerColor    = surfaceColor,
+        titleContentColor = contentColor,
+        textContentColor  = secondaryColor,
         title = { Text(title) },
         text  = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 // Preset swatches
-                Text("预设", style = MaterialTheme.typography.labelMedium, color = Color(0xFF888888))
+                Text("预设", style = MaterialTheme.typography.labelMedium, color = secondaryColor)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     accentPresets.forEachIndexed { i, color ->
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -68,24 +72,24 @@ fun ColorPickerDialog(
                                     .background(color)
                                     .border(
                                         width = 1.dp,
-                                        color = if (selectedColor == color) Color.White else Color(0xFF333333),
+                                        color = if (selectedColor == color) MaterialTheme.colorScheme.primary else outlineColor,
                                         shape = CircleShape
                                     )
                                     .clickable { syncFrom(color) }
                             )
                             Spacer(Modifier.height(2.dp))
-                            Text(accentPresetLabels[i], style = MaterialTheme.typography.labelSmall, color = Color(0xFF555555), fontSize = androidx.compose.ui.unit.TextUnit(8f, androidx.compose.ui.unit.TextUnitType.Sp))
+                            Text(accentPresetLabels[i], style = MaterialTheme.typography.labelSmall, color = secondaryColor, fontSize = androidx.compose.ui.unit.TextUnit(8f, androidx.compose.ui.unit.TextUnitType.Sp))
                         }
                     }
                 }
 
-                Divider(color = Color(0xFF2A2A2A))
+                HorizontalDivider(color = outlineColor.copy(alpha = 0.45f))
 
                 // Custom HSV sliders
-                Text("自定义", style = MaterialTheme.typography.labelMedium, color = Color(0xFF888888))
+                Text("自定义", style = MaterialTheme.typography.labelMedium, color = secondaryColor)
 
                 // Hue slider
-                Text("色相", style = MaterialTheme.typography.labelSmall, color = Color(0xFF666666))
+                Text("色相", style = MaterialTheme.typography.labelSmall, color = secondaryColor)
                 Slider(
                     value = hue / 360f,
                     onValueChange = { hue = it * 360f; rebuildColor() },
@@ -99,14 +103,14 @@ fun ColorPickerDialog(
                             }
                         )),
                     colors = SliderDefaults.colors(
-                        thumbColor = Color.White,
+                        thumbColor = contentColor,
                         activeTrackColor = Color.Transparent,
                         inactiveTrackColor = Color.Transparent
                     )
                 )
 
                 // Saturation slider
-                Text("饱和度", style = MaterialTheme.typography.labelSmall, color = Color(0xFF666666))
+                Text("饱和度", style = MaterialTheme.typography.labelSmall, color = secondaryColor)
                 Slider(
                     value = sat,
                     onValueChange = { sat = it; rebuildColor() },
@@ -119,14 +123,14 @@ fun ColorPickerDialog(
                             Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, 1f, value)))
                         ))),
                     colors = SliderDefaults.colors(
-                        thumbColor = Color.White,
+                        thumbColor = contentColor,
                         activeTrackColor = Color.Transparent,
                         inactiveTrackColor = Color.Transparent
                     )
                 )
 
                 // Brightness slider
-                Text("亮度", style = MaterialTheme.typography.labelSmall, color = Color(0xFF666666))
+                Text("亮度", style = MaterialTheme.typography.labelSmall, color = secondaryColor)
                 Slider(
                     value = value,
                     onValueChange = { value = it; rebuildColor() },
@@ -139,7 +143,7 @@ fun ColorPickerDialog(
                             Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, sat, 1f)))
                         ))),
                     colors = SliderDefaults.colors(
-                        thumbColor = Color.White,
+                        thumbColor = contentColor,
                         activeTrackColor = Color.Transparent,
                         inactiveTrackColor = Color.Transparent
                     )
@@ -169,7 +173,7 @@ fun ColorPickerDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消", color = Color(0xFFAAAAAA)) }
+            TextButton(onClick = onDismiss) { Text("取消", color = secondaryColor) }
         }
     )
 }

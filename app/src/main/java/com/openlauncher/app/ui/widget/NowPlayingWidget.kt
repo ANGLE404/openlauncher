@@ -138,7 +138,7 @@ fun NowPlayingWidget(
 
         // 2. FLOATING MULTI-SOURCE SELECTOR (Top-Right, always overlayed)
         var menuExpanded by remember { mutableStateOf(false) }
-        val selectorIconColor = if (isDayMode) Color.Black.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
+        val selectorIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
         
         Box(
             modifier = Modifier
@@ -156,8 +156,8 @@ fun NowPlayingWidget(
                     modifier = Modifier.size(16.dp)
                 )
             }
-            val dropdownBg   = if (isDayMode) Color(0xFFF0F0F0) else MaterialTheme.colorScheme.background
-            val dropdownText = if (isDayMode) Color(0xFF111111) else MaterialTheme.colorScheme.onBackground
+            val dropdownBg   = MaterialTheme.colorScheme.surfaceVariant
+            val dropdownText = MaterialTheme.colorScheme.onSurface
             DropdownMenu(
                 expanded = menuExpanded,
                 onDismissRequest = { menuExpanded = false },
@@ -207,9 +207,9 @@ private fun RadioDeck(
     onAssignRadio: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val contentColor = if (isDayMode) Color(0xFF111111) else MaterialTheme.colorScheme.onBackground
-    val dimColor     = if (isDayMode) Color(0xFF444444) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-    val borderColor  = if (isDayMode) Color(0xFF777777) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f)
+    val contentColor = MaterialTheme.colorScheme.onSurface
+    val dimColor     = MaterialTheme.colorScheme.onSurfaceVariant
+    val borderColor  = MaterialTheme.colorScheme.outline
 
     if (hardwareRadio == null) {
         // No real tuner detected — be honest about it instead of simulating one
@@ -268,9 +268,9 @@ private fun RadioDeck(
     val displayFreq = freqClean.ifEmpty { hardwareRadio.freq }
     val displayUnit = if (hardwareRadio.isAm) "kHz" else "MHz"
 
-    val chipInactiveBg = if (isDayMode) Color(0xFFE0E0E0) else Color(0xFF1A1A1A)
-    val chipActiveBg   = if (isDayMode) Color(0xFF222222) else Color(0xFFDDDDDD)
-    val chipActiveText = if (isDayMode) Color.White else Color(0xFF111111)
+    val chipInactiveBg = MaterialTheme.colorScheme.surfaceVariant
+    val chipActiveBg   = MaterialTheme.colorScheme.primary
+    val chipActiveText = MaterialTheme.colorScheme.onPrimary
 
     Column(
         modifier = modifier
@@ -365,7 +365,7 @@ private fun RadioDeck(
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = (if (!powerOn) "收音机关闭" else hardwareRadio.stationName ?: "LIVE").uppercase(),
+                        text = if (!powerOn) "收音机关闭" else hardwareRadio.stationName ?: "直播中",
                     color = if (powerOn) accent else dimColor.copy(alpha = 0.5f),
                     fontSize = 8.sp, fontFamily = FontFamily.Monospace,
                     letterSpacing = 1.5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis
@@ -413,29 +413,10 @@ private fun RadioDeck(
                 for (pIdx in 0 until 6) {
                     val presetFreq = currentPresets[pIdx]
                     val isTuned    = freqFloat != null && abs(freqFloat - presetFreq) < tolerance
-                    val presetBg = when {
-                        isTuned && isDayMode -> Color(0xFF222222)
-                        isTuned              -> accent.copy(alpha = 0.12f)
-                        else                 -> Color.Transparent
-                    }
-                    val presetBorderColor = when {
-                        isTuned && isDayMode -> Color(0xFF222222)
-                        isTuned              -> accent
-                        isDayMode            -> Color(0xFFCCCCCC)
-                        else                 -> Color(0xFF1D2024)
-                    }
-                    val presetNumColor = when {
-                        isTuned && isDayMode -> Color.White
-                        isTuned              -> accent
-                        isDayMode            -> Color(0xFF444444)
-                        else                 -> Color(0xFF777777)
-                    }
-                    val presetFreqColor = when {
-                        isTuned && isDayMode -> Color.White.copy(alpha = 0.9f)
-                        isTuned              -> accent.copy(alpha = 0.9f)
-                        isDayMode            -> Color(0xFF666666)
-                        else                 -> Color(0xFF777777).copy(alpha = 0.7f)
-                    }
+                    val presetBg = if (isTuned) accent.copy(alpha = 0.14f) else Color.Transparent
+                    val presetBorderColor = if (isTuned) accent else borderColor.copy(alpha = 0.7f)
+                    val presetNumColor = if (isTuned) accent else contentColor
+                    val presetFreqColor = if (isTuned) accent.copy(alpha = 0.9f) else dimColor
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -531,10 +512,8 @@ private fun StandardMinimalPlayer(
     val context = LocalContext.current
     
     // UI Theme colors
-    val idleIconColor = if (isDayMode) Color(0xFF555555) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.30f)
-    val idleTextColor = if (isDayMode) Color(0xFF555555) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.30f)
-    val contentTextColor = if (isDayMode) Color(0xFF111111) else MaterialTheme.colorScheme.onBackground
-    val subTextColor = if (isDayMode) Color(0xFF666666) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.30f)
+    val idleIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f)
+    val idleTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f)
 
     Box(modifier = modifier) {
         if (!hasContent) {
@@ -568,7 +547,7 @@ private fun StandardMinimalPlayer(
                         if (hasCarPlay && hasAutoApp) {
                             androidx.compose.material3.VerticalDivider(
                                 modifier = Modifier.fillMaxHeight().padding(vertical = 16.dp),
-                                color = if (isDayMode) Color(0xFFBBBBBB) else Color(0xFF1E1E1E)
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)
                             )
                         }
                         if (hasAutoApp) {
@@ -614,15 +593,13 @@ private fun StandardMinimalPlayer(
 
             // Draw Album Art as background with smooth blur overlay if present
             val hasAlbumArt = nonNullState.albumArt != null
-            val useDarkTheme = hasAlbumArt || !isDayMode
-
-            val currentTextColor = if (hasAlbumArt) Color.White else if (isDayMode) Color(0xFF111111) else MaterialTheme.colorScheme.onBackground
-            val currentSubTextColor = if (hasAlbumArt) Color.White.copy(alpha = 0.6f) else if (isDayMode) Color(0xFF666666) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-            val currentProgressColor = if (useDarkTheme) accent else if (isDayMode) Color(0xFF111111) else accent
+            val currentTextColor = if (hasAlbumArt) Color.White else MaterialTheme.colorScheme.onSurface
+            val currentSubTextColor = if (hasAlbumArt) Color.White.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurfaceVariant
+            val currentProgressColor = accent
             val currentProgressTrack = currentTextColor.copy(alpha = 0.15f)
             val currentIconColor = currentTextColor.copy(alpha = 0.75f)
-            val currentPlayBgColor = if (useDarkTheme) accent.copy(alpha = 0.9f) else if (isDayMode) Color(0xFF111111) else accent.copy(alpha = 0.9f)
-            val currentPlayIconColor = if (useDarkTheme) Color.Black else Color.White
+            val currentPlayBgColor = accent.copy(alpha = 0.9f)
+            val currentPlayIconColor = MaterialTheme.colorScheme.onPrimary
 
             if (hasAlbumArt) {
                 // Prefer the full-resolution art URI when the source app provides
@@ -670,7 +647,7 @@ private fun StandardMinimalPlayer(
                         fontSize = 14.sp
                     )
                     Text(
-                        text = nonNullState.artist.ifEmpty { "Unknown" },
+                        text = nonNullState.artist.ifEmpty { "未知艺术家" },
                         style = MaterialTheme.typography.bodySmall,
                         color = currentSubTextColor,
                         maxLines = 1,
@@ -703,7 +680,7 @@ private fun StandardMinimalPlayer(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         IconButton(onClick = { if (!isEditing) onPrev() }, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.SkipPrevious, "Prev", tint = currentIconColor, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.SkipPrevious, "上一首", tint = currentIconColor, modifier = Modifier.size(20.dp))
                         }
                         Box(
                             contentAlignment = Alignment.Center,
@@ -715,14 +692,14 @@ private fun StandardMinimalPlayer(
                             IconButton(onClick = { if (!isEditing) onPlayPause() }, modifier = Modifier.size(42.dp)) {
                                 Icon(
                                     imageVector = if (nonNullState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                    contentDescription = if (nonNullState.isPlaying) "Pause" else "Play",
+                                    contentDescription = if (nonNullState.isPlaying) "暂停" else "播放",
                                     tint = currentPlayIconColor,
                                     modifier = Modifier.size(22.dp)
                                 )
                             }
                         }
                         IconButton(onClick = { if (!isEditing) onNext() }, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.SkipNext, "Next", tint = currentIconColor, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.SkipNext, "下一首", tint = currentIconColor, modifier = Modifier.size(20.dp))
                         }
                     }
                 }
@@ -735,4 +712,3 @@ private fun formatMs(ms: Long): String {
     val s = ms / 1000
     return "%d:%02d".format(s / 60, s % 60)
 }
-

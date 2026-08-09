@@ -40,7 +40,7 @@ fun AltimeterWidget(
     // Accelerometer sensor state
     var rollDeg  by remember { mutableFloatStateOf(0f) }
     var pitchDeg by remember { mutableFloatStateOf(0f) }
-    val gravBuf  = remember { FloatArray(3) { 0f } }
+    val gravBuf  = remember { FloatArray(3) }
     var hasSensor by remember { mutableStateOf(false) }
 
     // GPS fallback state for sensor-less devices

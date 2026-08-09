@@ -1,6 +1,8 @@
 package com.openlauncher.app.util
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -9,6 +11,9 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
+import android.os.SystemClock
+import android.util.Log
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.math.atan2
@@ -20,13 +25,15 @@ data class LocationData(
     val longitude: Double,
     val altitude: Double,
     val accuracy: Float,
-    val speedMps: Float = 0f
+    val speedMps: Float = 0f,
+    val capturedAtElapsedRealtimeMs: Long = 0L
 )
 
 class LocationCompassManager(context: Context) {
 
-    private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-    private val sensorManager   = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    private val appContext = context.applicationContext
+    private val locationManager = appContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    private val sensorManager   = appContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
     private val _location  = MutableStateFlow<LocationData?>(null)
     private val _bearing   = MutableStateFlow(0f)
@@ -73,7 +80,9 @@ class LocationCompassManager(context: Context) {
                 longitude = loc.longitude,
                 altitude  = loc.altitude,
                 accuracy  = loc.accuracy,
-                speedMps  = if (loc.hasSpeed()) loc.speed else 0f
+                speedMps  = if (loc.hasSpeed()) loc.speed else 0f,
+                capturedAtElapsedRealtimeMs = (loc.elapsedRealtimeNanos / 1_000_000L)
+                    .takeIf { it > 0L } ?: SystemClock.elapsedRealtime()
             )
 
             // 1. If GPS has a hardware-computed bearing, use it (works offline)
@@ -115,10 +124,21 @@ class LocationCompassManager(context: Context) {
             sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_UI)
         }
 
+        val hasFineLocation = ContextCompat.checkSelfPermission(
+            appContext,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        val hasCoarseLocation = ContextCompat.checkSelfPermission(
+            appContext,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!hasFineLocation && !hasCoarseLocation) return
+
         // Location — Robust offline-first registration
         // GPS Provider (Works 100% offline, sat-based)
         try {
-            if (locationManager.allProviders.contains(LocationManager.GPS_PROVIDER)) {
+            if (hasFineLocation && locationManager.allProviders.contains(LocationManager.GPS_PROVIDER)) {
                 locationManager.requestLocationUpdates(
                     LocationManager.GPS_PROVIDER, 3000L, 5f, locationListener
                 )
@@ -126,7 +146,9 @@ class LocationCompassManager(context: Context) {
                     locationListener.onLocationChanged(it)
                 }
             }
-        } catch (_: Exception) {}
+        } catch (error: SecurityException) {
+            Log.w("LocationCompass", "GPS 权限在注册期间被撤销", error)
+        }
 
         // Network Provider (Works online, cell/wifi-based)
         try {
@@ -138,7 +160,9 @@ class LocationCompassManager(context: Context) {
                     locationListener.onLocationChanged(it)
                 }
             }
-        } catch (_: Exception) {}
+        } catch (error: SecurityException) {
+            Log.w("LocationCompass", "网络定位权限在注册期间被撤销", error)
+        }
     }
 
     fun stop() {

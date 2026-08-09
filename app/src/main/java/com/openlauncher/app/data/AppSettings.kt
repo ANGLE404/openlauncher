@@ -7,6 +7,7 @@ enum class ClockStyle { DIGITAL, ANALOG }
 enum class UnitSystem { METRIC, IMPERIAL }
 enum class AppFont { SYSTEM, NOTO_SANS_SC, JETBRAINS_MONO, SOURCE_CODE_PRO }
 enum class DashboardTheme { ICE_BLUE, TRACK_ORANGE, ALERT_RED, AURORA_GREEN, NEON_PURPLE }
+enum class DashboardStyle { OEM, CYBER, GLASS }
 enum class DayNightMode { DARK, LIGHT, AUTO, SYSTEM }
 enum class SidebarPosition { LEFT, RIGHT, BOTTOM }
 enum class GradientDirection { TOP_TO_BOTTOM, LEFT_TO_RIGHT, DIAGONAL, RADIAL }
@@ -34,10 +35,10 @@ data class SoundPadConfig(
 )
 
 fun defaultSoundboardPads() = listOf(
-    SoundPadConfig("mario_jump",   synthType = "mario_jump"),
-    SoundPadConfig("mario_coin",   synthType = "mario_coin"),
-    SoundPadConfig("boom",         synthType = "boom"),
-    SoundPadConfig("loud_fart",    synthType = "loud_fart"),
+    SoundPadConfig("跳跃",         synthType = "mario_jump"),
+    SoundPadConfig("金币",         synthType = "mario_coin"),
+    SoundPadConfig("爆炸",         synthType = "boom"),
+    SoundPadConfig("搞笑",         synthType = "loud_fart"),
     SoundPadConfig("+",            synthType = ""),
     SoundPadConfig("+",            synthType = "")
 )
@@ -67,8 +68,15 @@ data class AppSettings(
     val vehicleName: String = "我的爱车",
     val accentColor: Int = Color(0xFF61DAFB).toArgb(),
     val dashboardTheme: DashboardTheme = DashboardTheme.ICE_BLUE,
+    val dashboardStyle: DashboardStyle = DashboardStyle.OEM,
     val backgroundColor: Int = Color.Black.toArgb(),
     val fontColor: Int = Color.White.toArgb(),
+    val surfaceColor: Int = Color(0xFF171C21).toArgb(),
+    val overlayColor: Int = Color(0xFF20272E).toArgb(),
+    val borderColor: Int = Color(0xFF35424C).toArgb(),
+    val secondaryTextColor: Int = Color(0xFFADB8C0).toArgb(),
+    val useCustomThemeColors: Boolean = false,
+    val useLegacyFontColor: Boolean = false,
     val wallpaperUri: String = "",
     val fontBold: Boolean = false,
     val textScale: Float = 1.2f,

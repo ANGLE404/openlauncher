@@ -1,7 +1,19 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+
+val releaseVersionProperties = Properties().apply {
+    rootProject.file("version.properties").inputStream().use { load(it) }
+}
+val releaseVersionName = requireNotNull(releaseVersionProperties.getProperty("VERSION_NAME")) {
+    "VERSION_NAME is missing from version.properties"
+}
+val releaseVersionCode = requireNotNull(releaseVersionProperties.getProperty("VERSION_CODE")) {
+    "VERSION_CODE is missing from version.properties"
+}.toInt()
 
 android {
     namespace  = "com.openlauncher.app"
@@ -13,8 +25,8 @@ android {
         applicationId  = "com.openlauncher.app"
         minSdk         = 21
         targetSdk      = 36
-        versionCode    = 6
-        versionName    = "0.0.5"
+        versionCode    = releaseVersionCode
+        versionName    = releaseVersionName
     }
 
     buildTypes {
@@ -37,6 +49,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -79,4 +92,18 @@ dependencies {
     implementation("com.google.code.gson:gson:2.13.1")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
+}
+
+val regressionCheck by tasks.registering(JavaExec::class) {
+    group = "verification"
+    description = "Runs dependency-free launcher regression checks."
+    dependsOn("compileDebugKotlin")
+    mainClass.set("com.openlauncher.app.RegressionChecks")
+    classpath = files(
+        layout.buildDirectory.dir("intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes")
+    ) + configurations.getByName("debugRuntimeClasspath")
+}
+
+tasks.named("check") {
+    dependsOn(regressionCheck)
 }

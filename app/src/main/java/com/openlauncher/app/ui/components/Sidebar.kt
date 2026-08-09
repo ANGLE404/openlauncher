@@ -16,6 +16,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Message
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -59,11 +61,10 @@ fun Sidebar(
     isHorizontal: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    val isDayMode    = LocalDayMode.current
-    val accent       = Color(settings.accentColor)
-    val sidebarBg    = if (isDayMode) Color(0xFFE0E0E0) else Color.Black.copy(alpha = 0.4f)
-    val iconInactive = if (isDayMode) Color(0xFF777777) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f)
-    val dividerColor = if (isDayMode) Color(0xFFCCCCCC) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
+    val accent = MaterialTheme.colorScheme.primary
+    val sidebarBg = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
+    val iconInactive = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.68f)
+    val dividerColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
     val density      = LocalDensity.current
     val slotSizePx   = with(density) { SLOT_SIZE.toPx() }
 
@@ -327,7 +328,7 @@ private fun ShortcutSlot(
                 )
             }
     ) {
-        val iconInactive = if (LocalDayMode.current) Color(0xFF777777) else Color(0xFF3A3A3A)
+        val iconInactive = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.68f)
         val override = shortcut.customIconOverride
         when {
             override != null && override != DefaultShortcutIcon.NONE -> {
@@ -378,19 +379,20 @@ private fun ShortcutActionDialog(
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
+        val dialogShape = MaterialTheme.shapes.small
         Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
-                .background(Color(0xFF111111))
-                .border(1.dp, Color(0xFF1E1E1E), RoundedCornerShape(10.dp))
+                .clip(dialogShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .border(1.dp, MaterialTheme.colorScheme.outline, dialogShape)
                 .padding(vertical = 4.dp)
                 .width(180.dp)
         ) {
             ActionRow("更换应用",     Icons.Default.SwapHoriz, accent, onChangeApp)
-            HorizontalDivider(color = Color(0xFF1A1A1A))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f))
             ActionRow("自定义图标", Icons.Default.Palette,   accent, onCustomizeIcon)
-            HorizontalDivider(color = Color(0xFF1A1A1A))
-            ActionRow("REMOVE",         Icons.Default.Delete,     Color(0xFF993333), onRemove)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f))
+            ActionRow("移除",             Icons.Default.Delete,     Color(0xFF993333), onRemove)
         }
     }
 }
@@ -421,16 +423,17 @@ private fun IconPickerDialog(
     val vectorOptions = DefaultShortcutIcon.entries.filter { it != DefaultShortcutIcon.NONE }
 
     Dialog(onDismissRequest = onDismiss) {
+        val dialogShape = MaterialTheme.shapes.small
         Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
-                .background(Color(0xFF111111))
-                .border(1.dp, Color(0xFF1E1E1E), RoundedCornerShape(10.dp))
+                .clip(dialogShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .border(1.dp, MaterialTheme.colorScheme.outline, dialogShape)
                 .padding(12.dp)
         ) {
             Text(
                 "选择图标",
-                color         = Color(0xFF888888),
+                color         = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize      = 9.sp,
                 letterSpacing = 2.sp,
                 modifier      = Modifier.padding(bottom = 10.dp)
@@ -447,15 +450,15 @@ private fun IconPickerDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Icon(Icons.Default.Apps, null, tint = if (currentOverride == null) accent else Color(0xFF666666), modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Apps, null, tint = if (currentOverride == null) accent else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
                     Text(
                         "应用原图标",
-                        color         = if (currentOverride == null) accent else Color(0xFF888888),
+                        color         = if (currentOverride == null) accent else MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize      = 9.sp,
                         letterSpacing = 1.sp
                     )
                 }
-                HorizontalDivider(color = Color(0xFF1A1A1A), modifier = Modifier.padding(vertical = 6.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f), modifier = Modifier.padding(vertical = 6.dp))
             }
 
             LazyVerticalGrid(
@@ -471,13 +474,13 @@ private fun IconPickerDialog(
                         modifier = Modifier
                             .aspectRatio(1f)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (isSelected) accent.copy(alpha = 0.18f) else Color(0xFF1A1A1A))
+                            .background(if (isSelected) accent.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surface)
                             .clickable { onPick(iconOption) }
                     ) {
                         Icon(
                             imageVector        = iconOption.toIcon(),
-                            contentDescription = iconOption.name,
-                            tint               = if (isSelected) accent else Color(0xFF888888),
+                            contentDescription = iconOption.displayNameZh(),
+                            tint               = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier           = Modifier.size(20.dp)
                         )
                     }
@@ -497,9 +500,8 @@ private fun NavButton(
     isHorizontal: Boolean = false,
     onClick: () -> Unit
 ) {
-    val isDayMode = LocalDayMode.current
-    val activeIconColor = if (isDayMode) Color(0xFF111111) else Color.White
-    val activeBg = if (isDayMode) Color(0xFF000000).copy(alpha = 0.08f) else Color.White.copy(alpha = 0.06f)
+    val activeIconColor = MaterialTheme.colorScheme.onSurface
+    val activeBg = accent.copy(alpha = 0.12f)
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -534,7 +536,7 @@ fun DefaultShortcutIcon.toIcon(): ImageVector = when (this) {
     DefaultShortcutIcon.SPEAKER     -> Icons.Default.Speaker
     DefaultShortcutIcon.HEADSET     -> Icons.Default.Headset
     DefaultShortcutIcon.EQUALIZER   -> Icons.Default.Equalizer
-    DefaultShortcutIcon.VOLUME_UP   -> Icons.Default.VolumeUp
+    DefaultShortcutIcon.VOLUME_UP   -> Icons.AutoMirrored.Filled.VolumeUp
     // Connectivity
     DefaultShortcutIcon.BLUETOOTH   -> Icons.Default.Bluetooth
     DefaultShortcutIcon.WIFI        -> Icons.Default.Wifi
@@ -547,7 +549,7 @@ fun DefaultShortcutIcon.toIcon(): ImageVector = when (this) {
     DefaultShortcutIcon.TV          -> Icons.Default.Tv
     DefaultShortcutIcon.VIDEOCAM    -> Icons.Default.Videocam
     DefaultShortcutIcon.STAR        -> Icons.Default.Star
-    DefaultShortcutIcon.MESSAGE     -> Icons.Default.Message
+    DefaultShortcutIcon.MESSAGE     -> Icons.AutoMirrored.Filled.Message
     DefaultShortcutIcon.TIMER       -> Icons.Default.Timer
     DefaultShortcutIcon.LOCK        -> Icons.Default.Lock
     DefaultShortcutIcon.SETTINGS    -> Icons.Default.Settings
@@ -555,4 +557,36 @@ fun DefaultShortcutIcon.toIcon(): ImageVector = when (this) {
     // Web / location
     DefaultShortcutIcon.GLOBE       -> Icons.Default.Language
     DefaultShortcutIcon.NONE        -> Icons.Default.Apps
+}
+
+private fun DefaultShortcutIcon.displayNameZh(): String = when (this) {
+    DefaultShortcutIcon.NONE -> "应用原图标"
+    DefaultShortcutIcon.RADIO -> "收音机"
+    DefaultShortcutIcon.CAMERA -> "相机"
+    DefaultShortcutIcon.PHONE -> "电话"
+    DefaultShortcutIcon.MAP -> "地图"
+    DefaultShortcutIcon.NAVIGATION -> "导航"
+    DefaultShortcutIcon.CAR -> "汽车"
+    DefaultShortcutIcon.GAS_STATION -> "加油站"
+    DefaultShortcutIcon.DASHBOARD -> "仪表盘"
+    DefaultShortcutIcon.MUSIC -> "音乐"
+    DefaultShortcutIcon.SPEAKER -> "扬声器"
+    DefaultShortcutIcon.HEADSET -> "耳机"
+    DefaultShortcutIcon.EQUALIZER -> "均衡器"
+    DefaultShortcutIcon.VOLUME_UP -> "音量"
+    DefaultShortcutIcon.BLUETOOTH -> "蓝牙"
+    DefaultShortcutIcon.WIFI -> "无线网络"
+    DefaultShortcutIcon.LIGHTBULB -> "照明"
+    DefaultShortcutIcon.BRIGHTNESS -> "亮度"
+    DefaultShortcutIcon.AC -> "空调"
+    DefaultShortcutIcon.THERMOSTAT -> "温度"
+    DefaultShortcutIcon.TV -> "电视"
+    DefaultShortcutIcon.VIDEOCAM -> "摄像机"
+    DefaultShortcutIcon.STAR -> "星标"
+    DefaultShortcutIcon.MESSAGE -> "消息"
+    DefaultShortcutIcon.TIMER -> "计时器"
+    DefaultShortcutIcon.LOCK -> "锁定"
+    DefaultShortcutIcon.SETTINGS -> "设置"
+    DefaultShortcutIcon.FAVORITE -> "收藏"
+    DefaultShortcutIcon.GLOBE -> "网络"
 }

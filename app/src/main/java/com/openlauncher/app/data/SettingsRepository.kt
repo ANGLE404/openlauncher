@@ -6,9 +6,12 @@ import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.openlauncher.app.model.CachedWeather
+import com.openlauncher.app.model.WeatherState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 import java.io.IOException
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "launcher_settings")
@@ -21,8 +24,15 @@ class SettingsRepository(private val context: Context) {
         val VEHICLE_NAME       = stringPreferencesKey("vehicle_name")
         val ACCENT_COLOR       = intPreferencesKey("accent_color")
         val DASHBOARD_THEME    = stringPreferencesKey("dashboard_theme")
+        val DASHBOARD_STYLE    = stringPreferencesKey("dashboard_style")
         val BG_COLOR           = intPreferencesKey("bg_color")
         val FONT_COLOR         = intPreferencesKey("font_color")
+        val SURFACE_COLOR      = intPreferencesKey("surface_color")
+        val OVERLAY_COLOR      = intPreferencesKey("overlay_color")
+        val BORDER_COLOR       = intPreferencesKey("border_color")
+        val SECONDARY_TEXT_COLOR = intPreferencesKey("secondary_text_color")
+        val USE_CUSTOM_THEME_COLORS = booleanPreferencesKey("use_custom_theme_colors")
+        val THEME_SCHEMA_VERSION = intPreferencesKey("theme_schema_version")
         val WALLPAPER_URI      = stringPreferencesKey("wallpaper_uri")
         val FONT_BOLD          = booleanPreferencesKey("font_bold")
         val TEXT_SCALE         = floatPreferencesKey("text_scale")
@@ -60,6 +70,13 @@ class SettingsRepository(private val context: Context) {
         val SPEEDOMETER_DIGITAL_ONLY = booleanPreferencesKey("speedometer_digital_only")
         val GRADIENT_DIRECTION    = stringPreferencesKey("gradient_direction")
         val USE_CUSTOM_BG_COLOR   = booleanPreferencesKey("use_custom_bg_color")
+        val WEATHER_CACHE_TEMP    = doublePreferencesKey("weather_cache_temp")
+        val WEATHER_CACHE_CODE    = intPreferencesKey("weather_cache_code")
+        val WEATHER_CACHE_WIND    = doublePreferencesKey("weather_cache_wind")
+        val WEATHER_CACHE_IS_DAY  = booleanPreferencesKey("weather_cache_is_day")
+        val WEATHER_CACHE_SAVED_AT = longPreferencesKey("weather_cache_saved_at")
+        val WEATHER_CACHE_LATITUDE = doublePreferencesKey("weather_cache_latitude")
+        val WEATHER_CACHE_LONGITUDE = doublePreferencesKey("weather_cache_longitude")
     }
 
     val settingsFlow: Flow<AppSettings> = context.dataStore.data
@@ -94,8 +111,22 @@ class SettingsRepository(private val context: Context) {
                 vehicleName    = prefs[Keys.VEHICLE_NAME]     ?: defaults.vehicleName,
                 accentColor    = prefs[Keys.ACCENT_COLOR]     ?: defaults.accentColor,
                 dashboardTheme = prefs[Keys.DASHBOARD_THEME]?.let { runCatching { DashboardTheme.valueOf(it) }.getOrNull() } ?: defaults.dashboardTheme,
+                dashboardStyle = prefs[Keys.DASHBOARD_STYLE]?.let { runCatching { DashboardStyle.valueOf(it) }.getOrNull() } ?: defaults.dashboardStyle,
                 backgroundColor = prefs[Keys.BG_COLOR]        ?: defaults.backgroundColor,
                 fontColor      = prefs[Keys.FONT_COLOR]       ?: defaults.fontColor,
+                surfaceColor   = prefs[Keys.SURFACE_COLOR]    ?: defaults.surfaceColor,
+                overlayColor   = prefs[Keys.OVERLAY_COLOR]    ?: defaults.overlayColor,
+                borderColor    = prefs[Keys.BORDER_COLOR]     ?: defaults.borderColor,
+                secondaryTextColor = prefs[Keys.SECONDARY_TEXT_COLOR] ?: defaults.secondaryTextColor,
+                useCustomThemeColors = shouldEnableLegacyCustomTheme(
+                    explicitSelection = prefs[Keys.USE_CUSTOM_THEME_COLORS],
+                    storedSchemaVersion = prefs[Keys.THEME_SCHEMA_VERSION]
+                ),
+                useLegacyFontColor = shouldUseLegacyFontColor(
+                    storedSchemaVersion = prefs[Keys.THEME_SCHEMA_VERSION],
+                    storedFontColor = prefs[Keys.FONT_COLOR],
+                    defaultFontColor = defaults.fontColor
+                ),
                 wallpaperUri   = prefs[Keys.WALLPAPER_URI]    ?: defaults.wallpaperUri,
                 fontBold       = prefs[Keys.FONT_BOLD]        ?: defaults.fontBold,
                 textScale      = prefs[Keys.TEXT_SCALE]       ?: defaults.textScale,
@@ -131,6 +162,7 @@ class SettingsRepository(private val context: Context) {
                 soundboardPads   = prefs[Keys.SOUNDBOARD_PADS_JSON]?.let {
                     runCatching {
                         gson.fromJson<List<SoundPadConfig>>(it, object : com.google.gson.reflect.TypeToken<List<SoundPadConfig>>() {}.type)
+                            .map(SoundPadConfig::localizedBuiltInLabel)
                     }.getOrNull()
                 } ?: defaults.soundboardPads,
                 vitalsAsBars     = prefs[Keys.VITALS_AS_BARS] ?: defaults.vitalsAsBars,
@@ -152,12 +184,46 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit { prefs -> writeSettings(prefs, transform(readSettings(prefs))) }
     }
 
+    suspend fun loadWeatherCache(): CachedWeather? {
+        val prefs = context.dataStore.data.first()
+        val savedAt = prefs[Keys.WEATHER_CACHE_SAVED_AT] ?: return null
+        val temperature = prefs[Keys.WEATHER_CACHE_TEMP] ?: return null
+        val code = prefs[Keys.WEATHER_CACHE_CODE] ?: return null
+        val wind = prefs[Keys.WEATHER_CACHE_WIND] ?: return null
+        val isDay = prefs[Keys.WEATHER_CACHE_IS_DAY] ?: return null
+        return CachedWeather(
+            state = WeatherState(temperature, code, wind, isDay),
+            savedAtMillis = savedAt,
+            latitude = prefs[Keys.WEATHER_CACHE_LATITUDE],
+            longitude = prefs[Keys.WEATHER_CACHE_LONGITUDE]
+        )
+    }
+
+    suspend fun saveWeatherCache(weather: WeatherState, latitude: Double, longitude: Double) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.WEATHER_CACHE_TEMP] = weather.temperatureCelsius
+            prefs[Keys.WEATHER_CACHE_CODE] = weather.weatherCode
+            prefs[Keys.WEATHER_CACHE_WIND] = weather.windspeedKmh
+            prefs[Keys.WEATHER_CACHE_IS_DAY] = weather.isDay
+            prefs[Keys.WEATHER_CACHE_SAVED_AT] = System.currentTimeMillis()
+            prefs[Keys.WEATHER_CACHE_LATITUDE] = latitude
+            prefs[Keys.WEATHER_CACHE_LONGITUDE] = longitude
+        }
+    }
+
     private fun writeSettings(prefs: MutablePreferences, s: AppSettings) {
             prefs[Keys.VEHICLE_NAME]       = s.vehicleName
             prefs[Keys.ACCENT_COLOR]       = s.accentColor
             prefs[Keys.DASHBOARD_THEME]    = s.dashboardTheme.name
+            prefs[Keys.DASHBOARD_STYLE]    = s.dashboardStyle.name
             prefs[Keys.BG_COLOR]           = s.backgroundColor
             prefs[Keys.FONT_COLOR]         = s.fontColor
+            prefs[Keys.SURFACE_COLOR]      = s.surfaceColor
+            prefs[Keys.OVERLAY_COLOR]      = s.overlayColor
+            prefs[Keys.BORDER_COLOR]       = s.borderColor
+            prefs[Keys.SECONDARY_TEXT_COLOR] = s.secondaryTextColor
+            prefs[Keys.USE_CUSTOM_THEME_COLORS] = s.useCustomThemeColors
+            prefs[Keys.THEME_SCHEMA_VERSION] = CURRENT_THEME_SCHEMA_VERSION
             prefs[Keys.WALLPAPER_URI]      = s.wallpaperUri
             prefs[Keys.FONT_BOLD]          = s.fontBold
             prefs[Keys.TEXT_SCALE]         = s.textScale
@@ -199,4 +265,15 @@ class SettingsRepository(private val context: Context) {
     suspend fun resetToDefaults() {
         context.dataStore.edit { it.clear() }
     }
+}
+
+private fun SoundPadConfig.localizedBuiltInLabel(): SoundPadConfig {
+    val localizedLabel = when (synthType) {
+        "mario_jump" -> "跳跃"
+        "mario_coin" -> "金币"
+        "boom" -> "爆炸"
+        "loud_fart" -> "搞笑"
+        else -> return this
+    }
+    return if (label == synthType) copy(label = localizedLabel) else this
 }

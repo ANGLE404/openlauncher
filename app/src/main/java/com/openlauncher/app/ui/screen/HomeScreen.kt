@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.FormatAlignLeft
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -47,6 +48,19 @@ import java.util.Calendar
 import com.openlauncher.app.util.LocationData
 
 private val WIDGET_RADIUS = RoundedCornerShape(14.dp)
+
+private fun widgetDisplayName(id: String): String = when (id) {
+    "CLOCK" -> "时钟"
+    "WEATHER" -> "天气"
+    "NOW_PLAYING" -> "正在播放"
+    "TELEMETRY" -> "指南针"
+    "ALTIMETER" -> "高度计"
+    "SPEEDOMETER" -> "速度表"
+    "VITALS" -> "车机状态"
+    "TRIP_TRACKER" -> "行程"
+    "SOUNDBOARD" -> "音效板"
+    else -> "组件"
+}
 
 private data class WidgetTypeInfo(
     val id: String,
@@ -97,6 +111,8 @@ private fun canAddWidget(settings: com.openlauncher.app.data.AppSettings): Boole
 fun HomeScreen(
     settings: AppSettings,
     weather: WeatherState?,
+    weatherIsCached: Boolean = false,
+    weatherCacheSavedAtMillis: Long? = null,
     nowPlaying: NowPlayingState?,
     location: LocationData?,
     bearing: Float,
@@ -135,22 +151,18 @@ fun HomeScreen(
     onAssignRadio: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val accent       = Color(settings.accentColor)
+    val accent       = MaterialTheme.colorScheme.primary
     val gap          = 6.dp
     val hasWallpaper = settings.wallpaperUri.isNotEmpty()
-    val widgetBg     = when {
-        isDayMode    -> Color(0xFFFFFFFF)
-        hasWallpaper -> Color(0xCC000000)
-        else         -> Color.Black.copy(alpha = 0.35f)
+    val widgetBg = if (hasWallpaper) {
+        MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
+    } else {
+        MaterialTheme.colorScheme.surface
     }
-    val widgetBorder = when {
-        isDayMode    -> Color(0xFFCCCCCC)
-        hasWallpaper -> Color(0x22FFFFFF)
-        else         -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
-    }
-    val headerTextColor   = if (isDayMode) Color(0xFF111111) else accent
-    val statusIconColor   = if (isDayMode) Color(0xFF444444) else Color(0xFF666666)
-    val controlIconColor  = if (isDayMode) Color(0xFF666666) else Color(0xFF444444)
+    val widgetBorder = MaterialTheme.colorScheme.outline
+    val headerTextColor = MaterialTheme.colorScheme.onBackground
+    val statusIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val controlIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f)
 
     var resizingId    by remember { mutableStateOf<String?>(null) }
     var contextMenuId by remember { mutableStateOf<String?>(null) }
@@ -179,11 +191,11 @@ fun HomeScreen(
             )
             Spacer(Modifier.weight(1f))
             AnimatedVisibility(visible = isWifi, enter = fadeIn(), exit = fadeOut()) {
-                Icon(Icons.Default.Wifi, "WiFi", tint = statusIconColor, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Wifi, "无线网络", tint = statusIconColor, modifier = Modifier.size(16.dp))
             }
             if (isWifi) Spacer(Modifier.width(6.dp))
             AnimatedVisibility(visible = isData, enter = fadeIn(), exit = fadeOut()) {
-                Icon(Icons.Default.SignalCellularAlt, "Data", tint = statusIconColor, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.SignalCellularAlt, "移动数据", tint = statusIconColor, modifier = Modifier.size(16.dp))
             }
             if (isLandscape) {
                 Spacer(Modifier.width(8.dp))
@@ -215,7 +227,7 @@ fun HomeScreen(
             }
         }
 
-        HorizontalDivider(color = if (isDayMode) Color(0xFFCCCCCC) else Color(0xFF141414))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f))
 
         // ── Widget Grid ─────────────────────────────────────────────────────
         BoxWithConstraints(
@@ -297,7 +309,7 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .absoluteOffset(x = dX, y = dY)
                                     .size(dW, dH)
-                                    .border(1.dp, Color.White.copy(alpha = 0.25f), WIDGET_RADIUS)
+                                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.65f), WIDGET_RADIUS)
                             )
                         }
                     }
@@ -309,24 +321,12 @@ fun HomeScreen(
                 val width  = cellW * w.spanX + gap * (w.spanX - 1)
                 val height = cellH * w.spanY + gap * (w.spanY - 1)
 
-                val label = when (w.id) {
-                    "CLOCK"       -> clockTimeLabel(Calendar.getInstance())
-                    "WEATHER"     -> "天气"
-                    "NOW_PLAYING" -> "正在播放"
-                    "TELEMETRY"   -> "指南针"
-                    "ALTIMETER"   -> "高度计"
-                    "SPEEDOMETER" -> "速度"
-                    "TRIP_TRACKER" -> "TRIP"
-                    "SOUNDBOARD"  -> "音效"
-                    else          -> w.id
-                }
+                val label = if (w.id == "CLOCK") clockTimeLabel(Calendar.getInstance()) else widgetDisplayName(w.id)
 
                 // Original (pre-auto-expand) spanX needed for drag boundary clamping
                 val origSpanX  = visible.find { it.id == w.id }?.spanX ?: 1
                 val isDragging = draggingId == w.id
-                // Weather with no data reserves its cell but draws nothing
-                // (still visible in edit mode so it can be moved/removed)
-                val isGhost    = w.id == "WEATHER" && weather == null && !editMode
+                val isGhost    = false
                 val dragDpX    = if (isDragging) with(density) { dragOffsetPx.x.toDp() } else 0.dp
                 val dragDpY    = if (isDragging) with(density) { dragOffsetPx.y.toDp() } else 0.dp
 
@@ -404,6 +404,8 @@ fun HomeScreen(
                             state      = weather,
                             accent     = accent,
                             metric     = settings.unitSystem.name == "METRIC",
+                            isCached  = weatherIsCached,
+                            cacheSavedAtMillis = weatherCacheSavedAtMillis,
                             isDayMode  = isDayMode,
                             modifier   = Modifier.fillMaxSize()
                         )
@@ -480,8 +482,7 @@ fun HomeScreen(
                     val labelColor = when {
                         isGhost -> Color.Transparent
                         w.id == "NOW_PLAYING" && nowPlaying?.albumArt != null && nowPlaying.title.isNotEmpty() -> Color.Transparent
-                        isDayMode -> Color(0xFF999999)
-                        else      -> Color(0xFF3A3A3A)
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f)
                     }
                     Text(
                         text          = label,
@@ -577,9 +578,9 @@ private fun WidgetContextMenu(
     onSetSpeedometerDigitalOnly: (Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val menuBg    = if (isDayMode) Color(0xFFFFFFFF) else Color(0xFF111111)
-    val menuBorder = if (isDayMode) Color(0xFFDDE1E5) else Color(0xFF1E1E1E)
-    val menuDivider = if (isDayMode) Color(0xFFF1F3F5) else Color(0xFF1A1A1A)
+    val menuBg = MaterialTheme.colorScheme.surfaceVariant
+    val menuBorder = MaterialTheme.colorScheme.outline
+    val menuDivider = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
@@ -589,7 +590,7 @@ private fun WidgetContextMenu(
                 .padding(vertical = 4.dp)
                 .width(200.dp)
         ) {
-            val inactiveMenuTint = if (isDayMode) Color(0xFF777777) else Color(0xFF555555)
+            val inactiveMenuTint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.62f)
             ContextRow("调整大小", Icons.Default.OpenWith, accent, onResize, isDayMode = isDayMode)
             if (widgetId == "CLOCK") {
                 HorizontalDivider(color = menuDivider)
@@ -621,7 +622,7 @@ private fun WidgetContextMenu(
                 HorizontalDivider(color = menuDivider)
                 ContextRow(
                     label   = "条形视图",
-                    icon    = Icons.Default.FormatAlignLeft,
+                    icon    = Icons.AutoMirrored.Filled.FormatAlignLeft,
                     tint    = if (vitalsAsBars) accent else inactiveMenuTint,
                     onClick = { onSetVitalsAsBars(true); onDismiss() },
                     isDayMode = isDayMode
@@ -650,13 +651,13 @@ private fun WidgetContextMenu(
                 ContextRow("指定 CarPlay 应用",      Icons.Default.PhoneAndroid,  accent, onAssignCarPlay, isDayMode = isDayMode)
                 if (carPlayPackage.isNotEmpty()) {
                     HorizontalDivider(color = menuDivider)
-                    ContextRow("清除 CarPlay 应用", Icons.Default.PhoneAndroid, Color(0xFF884444), onClearCarPlay, isDayMode = isDayMode)
+                    ContextRow("清除 CarPlay 应用", Icons.Default.PhoneAndroid, MaterialTheme.colorScheme.error, onClearCarPlay, isDayMode = isDayMode)
                 }
                 HorizontalDivider(color = menuDivider)
                 ContextRow("指定 Android Auto 应用", Icons.Default.DirectionsCar, accent, onAssignAndroidAuto, isDayMode = isDayMode)
                 if (androidAutoPackage.isNotEmpty()) {
                     HorizontalDivider(color = menuDivider)
-                    ContextRow("清除 Android Auto 应用", Icons.Default.DirectionsCar, Color(0xFF884444), onClearAndroidAuto, isDayMode = isDayMode)
+                    ContextRow("清除 Android Auto 应用", Icons.Default.DirectionsCar, MaterialTheme.colorScheme.error, onClearAndroidAuto, isDayMode = isDayMode)
                 }
             }
 
@@ -672,17 +673,7 @@ private fun ContextRow(
     onClick: () -> Unit,
     isDayMode: Boolean = false
 ) {
-    val finalTint = if (isDayMode) {
-        if (tint == Color(0xFF884444)) {
-            tint
-        } else if (tint == Color(0xFF777777)) {
-            Color(0xFF888888)
-        } else {
-            Color(0xFF111111)
-        }
-    } else {
-        tint
-    }
+    val finalTint = tint
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -710,14 +701,14 @@ private fun WidgetResizeDialog(
     val maxSpanX = GRID_COLS - config.gridX
     val maxSpanY = GRID_ROWS - config.gridY
 
-    val dialogBg     = if (isDayMode) Color(0xFFFFFFFF) else MaterialTheme.colorScheme.background
-    val dialogText   = if (isDayMode) Color(0xFF111111) else MaterialTheme.colorScheme.onBackground
-    val cancelColor  = if (isDayMode) Color(0xFF6C757D) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+    val dialogBg = MaterialTheme.colorScheme.surfaceVariant
+    val dialogText = MaterialTheme.colorScheme.onSurface
+    val cancelColor = MaterialTheme.colorScheme.onSurfaceVariant
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text          = config.id.replace('_', ' '),
+                text          = widgetDisplayName(config.id),
                 color         = dialogText,
                 fontSize      = 11.sp,
                 letterSpacing = 2.sp
@@ -755,10 +746,10 @@ private fun SpanRow(
     isDayMode: Boolean,
     onChange: (Int) -> Unit
 ) {
-    val textColor   = if (isDayMode) Color(0xFF111111) else MaterialTheme.colorScheme.onBackground
-    val dimColor    = if (isDayMode) Color(0xFF495057) else Color(0xFF666666)
-    val disabledC   = if (isDayMode) Color(0xFFCED4DA) else Color(0xFF333333)
-    val inactiveBg  = if (isDayMode) Color(0xFFE9ECEF) else Color(0xFF2A2A2A)
+    val textColor = MaterialTheme.colorScheme.onSurface
+    val dimColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val disabledC = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
+    val inactiveBg = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
     Row(
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -775,7 +766,7 @@ private fun SpanRow(
             modifier = Modifier.size(32.dp)
         ) {
             Icon(
-                Icons.Default.Remove, null,
+                Icons.Default.Remove, "减小${label}",
                 tint     = if (value > min) textColor else disabledC,
                 modifier = Modifier.size(16.dp)
             )
@@ -792,7 +783,7 @@ private fun SpanRow(
             modifier = Modifier.size(32.dp)
         ) {
             Icon(
-                Icons.Default.Add, null,
+                Icons.Default.Add, "增大${label}",
                 tint     = if (value < max) accent else disabledC,
                 modifier = Modifier.size(16.dp)
             )
@@ -824,10 +815,10 @@ private fun WidgetLibraryDialog(
     onRemove: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val dialogBg    = if (isDayMode) Color(0xFFEEEEEE) else Color(0xFF0C0C0C)
-    val dialogBorder = if (isDayMode) Color(0xFFCCCCCC) else Color(0xFF1E1E1E)
-    val titleColor  = if (isDayMode) Color(0xFF495057) else Color(0xFF555555)
-    val closeColor  = if (isDayMode) Color(0xFF495057) else Color(0xFF444444)
+    val dialogBg = MaterialTheme.colorScheme.surfaceVariant
+    val dialogBorder = MaterialTheme.colorScheme.outline
+    val titleColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val closeColor = MaterialTheme.colorScheme.onSurfaceVariant
 
     val activeIds = buildSet {
         if (settings.showClock) add("CLOCK")
@@ -863,7 +854,7 @@ private fun WidgetLibraryDialog(
                 )
                 Spacer(Modifier.weight(1f))
                 IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
-                    Icon(Icons.Default.Close, null, tint = closeColor, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Default.Close, "关闭组件库", tint = closeColor, modifier = Modifier.size(14.dp))
                 }
             }
 
@@ -890,7 +881,7 @@ private fun WidgetLibraryDialog(
                 Spacer(Modifier.height(10.dp))
                 Text(
                     text          = "全部 ${GRID_COLS * GRID_ROWS} 个单元已占用，移除组件后才能继续添加",
-                    color         = if (isDayMode) Color(0xFFE03131) else Color(0xFF3A3A3A),
+                    color         = MaterialTheme.colorScheme.error,
                     fontSize      = 8.sp,
                     letterSpacing = 1.sp,
                     modifier      = Modifier.fillMaxWidth(),
@@ -911,10 +902,10 @@ private fun WidgetLibraryCard(
     onToggle: () -> Unit
 ) {
     val enabled    = isActive || canAdd
-    val cardBorder = if (isActive) accent else if (isDayMode) Color(0xFFCCCCCC) else Color(0xFF1A1A1A)
-    val cardBg     = if (isActive) accent.copy(alpha = 0.15f) else if (isDayMode) Color(0xFFFFFFFF) else Color(0xFF0E0E0E)
-    val iconTint   = if (isActive) accent else if (isDayMode) Color(0xFF495057) else Color(0xFF333333)
-    val labelColor = if (isActive) accent else if (isDayMode) Color(0xFF212529) else Color(0xFF3A3A3A)
+    val cardBorder = if (isActive) accent else MaterialTheme.colorScheme.outline
+    val cardBg = if (isActive) accent.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface
+    val iconTint = if (isActive) accent else MaterialTheme.colorScheme.onSurfaceVariant
+    val labelColor = if (isActive) accent else MaterialTheme.colorScheme.onSurface
 
     Column(
         modifier = Modifier
@@ -942,14 +933,14 @@ private fun WidgetLibraryCard(
         Spacer(Modifier.height(3.dp))
         Text(
             text          = when {
-                isActive -> "ACTIVE"
-                !canAdd  -> "FULL"
-                else     -> "ADD"
+                isActive -> "已启用"
+                !canAdd  -> "已满"
+                else     -> "添加"
             },
             color         = when {
                 isActive -> accent.copy(alpha = 0.75f)
-                !canAdd  -> if (isDayMode) Color(0xFFADB5BD) else Color(0xFF282828)
-                else     -> if (isDayMode) Color(0xFF495057) else Color(0xFF3A3A3A)
+                !canAdd  -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
+                else     -> MaterialTheme.colorScheme.onSurfaceVariant
             },
             fontSize      = 6.sp,
             letterSpacing = 1.sp,

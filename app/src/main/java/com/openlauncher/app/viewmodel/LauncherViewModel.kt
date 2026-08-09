@@ -29,6 +29,10 @@ import com.openlauncher.app.model.AppInfo
 import com.openlauncher.app.model.NavDestination
 import com.openlauncher.app.model.NowPlayingState
 import com.openlauncher.app.model.WeatherState
+import com.openlauncher.app.model.isWeatherCacheUsable
+import com.openlauncher.app.model.shouldRefreshWeather
+import com.openlauncher.app.model.weatherCacheRemainingMillis
+import com.openlauncher.app.model.weatherDistanceKm
 import com.openlauncher.app.service.MediaListenerService
 import com.openlauncher.app.util.LocationCompassManager
 import com.openlauncher.app.util.LocationData
@@ -370,12 +374,44 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     private val _weather = MutableStateFlow<WeatherState?>(null)
     val weather: StateFlow<WeatherState?> = _weather
 
+    private val _weatherIsCached = MutableStateFlow(false)
+    val weatherIsCached: StateFlow<Boolean> = _weatherIsCached
+
+    private val _weatherCacheSavedAtMillis = MutableStateFlow<Long?>(null)
+    val weatherCacheSavedAtMillis: StateFlow<Long?> = _weatherCacheSavedAtMillis
+    private var weatherCacheCoordinates: Pair<Double, Double>? = null
+
     private val _weatherError = MutableStateFlow<String?>(null)
     val weatherError: StateFlow<String?> = _weatherError
 
     private var weatherJob: Job? = null
+    private var weatherCacheExpiryJob: Job? = null
+    private var weatherRequestSequence = 0L
+
+    private fun clearCachedWeather(savedAtMillis: Long) {
+        if (_weatherIsCached.value && _weatherCacheSavedAtMillis.value == savedAtMillis) {
+            _weather.value = null
+            _weatherIsCached.value = false
+            _weatherCacheSavedAtMillis.value = null
+            weatherCacheCoordinates = null
+        }
+    }
+
+    private fun scheduleWeatherCacheExpiry(savedAtMillis: Long) {
+        weatherCacheExpiryJob?.cancel()
+        val remainingMillis = weatherCacheRemainingMillis(savedAtMillis)
+        if (remainingMillis <= 0L) {
+            clearCachedWeather(savedAtMillis)
+            return
+        }
+        weatherCacheExpiryJob = viewModelScope.launch {
+            delay(remainingMillis)
+            clearCachedWeather(savedAtMillis)
+        }
+    }
 
     fun fetchWeather(lat: Double, lon: Double, metric: Boolean) {
+        val requestSequence = ++weatherRequestSequence
         weatherJob?.cancel()
         weatherJob = viewModelScope.launch {
             try {
@@ -384,16 +420,27 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
                 // the value through two lossy conversions
                 val resp = WeatherApi.service.getForecast(lat, lon, temperatureUnit = "celsius")
                 resp.currentWeather?.let { cw ->
-                    _weather.value = WeatherState(
+                    if (requestSequence != weatherRequestSequence) return@launch
+                    val currentWeather = WeatherState(
                         temperatureCelsius = cw.temperature,
                         weatherCode       = cw.weathercode,
                         windspeedKmh      = cw.windspeed,
                         isDay             = cw.isDay == 1
                     )
+                    _weather.value = currentWeather
+                    _weatherIsCached.value = false
+                    _weatherCacheSavedAtMillis.value = null
+                    weatherCacheCoordinates = null
+                    weatherCacheExpiryJob?.cancel()
+                    settingsRepo.saveWeatherCache(currentWeather, lat, lon)
                 }
                 _weatherError.value = null
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                _weatherError.value = e.message
+                if (requestSequence == weatherRequestSequence) {
+                    _weatherError.value = e.message
+                }
             }
         }
     }
@@ -624,6 +671,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         radioSessionController()?.transportControls?.play()
     }
 
+    @Suppress("DEPRECATION")
     fun refreshConnectivity() {
         val cm = getApplication<Application>().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -632,11 +680,8 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
             _isData.value = caps?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true
         } else {
             // activeNetwork requires API 23 — legacy path for Android 5.x head units
-            @Suppress("DEPRECATION")
             val info = cm.activeNetworkInfo
-            @Suppress("DEPRECATION")
             val connected = info?.isConnected == true
-            @Suppress("DEPRECATION")
             val type = info?.type
             _isWifi.value = connected && type == ConnectivityManager.TYPE_WIFI
             _isData.value = connected && type == ConnectivityManager.TYPE_MOBILE
@@ -654,17 +699,52 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         loadInstalledApps()
         refreshConnectivity()
         if (hasSzchoicewayMcu) startHardwareRadioObserver()
+        viewModelScope.launch {
+            settingsRepo.loadWeatherCache()?.takeIf { cached ->
+                isWeatherCacheUsable(cached.savedAtMillis)
+            }?.let { cached ->
+                if (_weather.value == null) {
+                    _weather.value = cached.state
+                    _weatherIsCached.value = true
+                    _weatherCacheSavedAtMillis.value = cached.savedAtMillis
+                    weatherCacheCoordinates = cached.latitude?.let { latitude ->
+                        cached.longitude?.let { longitude -> latitude to longitude }
+                    }
+                    scheduleWeatherCacheExpiry(cached.savedAtMillis)
+                }
+            }
+        }
         // Fetch weather on first location fix, then every 30 minutes.
         // The minute ticker covers the parked case where no location updates arrive.
         viewModelScope.launch {
             var lastFetchMs = 0L
+            var lastFetchCoordinates: Pair<Double, Double>? = null
             merge(
                 locationMgr.location.filterNotNull(),
                 minuteTicker.mapNotNull { locationMgr.location.value }
             ).collect { loc ->
                 val now = System.currentTimeMillis()
-                if (now - lastFetchMs >= 30 * 60 * 1_000L) {
+                weatherCacheCoordinates?.let { (cachedLat, cachedLon) ->
+                    if (_weatherIsCached.value && weatherDistanceKm(cachedLat, cachedLon, loc.latitude, loc.longitude) > 50.0) {
+                        _weather.value = null
+                        _weatherIsCached.value = false
+                        _weatherCacheSavedAtMillis.value = null
+                        weatherCacheCoordinates = null
+                        weatherCacheExpiryJob?.cancel()
+                    }
+                }
+                val previousCoordinates = lastFetchCoordinates
+                if (shouldRefreshWeather(
+                        lastFetchMillis = lastFetchMs,
+                        nowMillis = now,
+                        lastLatitude = previousCoordinates?.first,
+                        lastLongitude = previousCoordinates?.second,
+                        currentLatitude = loc.latitude,
+                        currentLongitude = loc.longitude
+                    )
+                ) {
                     lastFetchMs = now
+                    lastFetchCoordinates = loc.latitude to loc.longitude
                     fetchWeather(loc.latitude, loc.longitude, settings.value.unitSystem.name == "METRIC")
                 }
             }

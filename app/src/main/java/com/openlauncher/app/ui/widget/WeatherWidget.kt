@@ -11,17 +11,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.openlauncher.app.model.WeatherState
+import com.openlauncher.app.model.cachedWeatherAgeLabel
 
 @Composable
 fun WeatherWidget(
     state: WeatherState?,
     accent: Color,
     metric: Boolean,
+    isCached: Boolean = false,
+    cacheSavedAtMillis: Long? = null,
     isDayMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    val contentColor = if (isDayMode) Color(0xFF111111) else MaterialTheme.colorScheme.onBackground
-    val subColor     = if (isDayMode) Color(0xFF888888) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+    val contentColor = MaterialTheme.colorScheme.onSurface
+    val subColor     = MaterialTheme.colorScheme.onSurfaceVariant
 
     Box(modifier = modifier) {
         if (state != null) {
@@ -43,11 +46,26 @@ fun WeatherWidget(
                     letterSpacing = 1.sp
                 )
                 Text(
-                    text          = state.conditionLabel.uppercase(),
+                    text = if (isCached) {
+                        val age = cacheSavedAtMillis?.let(::cachedWeatherAgeLabel)
+                        if (age != null) "${state.conditionLabel}（${age}缓存）"
+                        else "${state.conditionLabel}（离线缓存）"
+                    } else state.conditionLabel,
                     color         = subColor,
                     fontSize      = 9.sp,
                     letterSpacing = 1.sp
                 )
+            }
+        } else {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(start = 14.dp, bottom = 14.dp),
+                verticalArrangement = Arrangement.Bottom,
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text("天气", color = subColor, fontSize = 12.sp, letterSpacing = 1.sp)
+                Spacer(Modifier.height(4.dp))
+                Text("等待定位或网络", color = contentColor, fontSize = 14.sp)
+                Text("暂时不可用", color = subColor, fontSize = 9.sp, letterSpacing = 0.5.sp)
             }
         }
     }

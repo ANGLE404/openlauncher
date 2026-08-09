@@ -1,5 +1,6 @@
 package com.openlauncher.app.ui.widget
 
+import android.content.Context
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -7,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -17,12 +19,21 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.openlauncher.app.util.LocationData
+import com.openlauncher.app.util.activeFreshSpeedMpsOrNull
+import com.openlauncher.app.util.tripAverageSpeedMps
 import kotlinx.coroutines.delay
 
 @Composable
@@ -33,110 +44,54 @@ fun TripTrackerWidget(
     isDayMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    // Master design system colors aligned with Vitals, Compass, Clock, and Altimeter
-    val displayColor = if (isDayMode) Color(0xFF111111) else androidx.compose.material3.MaterialTheme.colorScheme.onBackground
-    val dimDisplayColor = if (isDayMode) Color(0xFF111111).copy(alpha = 0.08f) else androidx.compose.material3.MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
-    
+    val context = LocalContext.current
+    val tripPreferences = remember {
+        context.getSharedPreferences("trip_tracker", Context.MODE_PRIVATE)
+    }
+    val colorScheme = MaterialTheme.colorScheme
+    val displayColor = colorScheme.onSurface
+    val dimDisplayColor = colorScheme.onSurface.copy(alpha = 0.08f)
     val lcdBg = Color.Transparent
-    val lcdBorder = if (isDayMode) Color(0xFFCCCCCC) else androidx.compose.material3.MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f)
-    
-    val labelColor = if (isDayMode) Color(0xFF888888) else androidx.compose.material3.MaterialTheme.colorScheme.onBackground.copy(alpha = 0.30f)
-    
-    // Safety accents mapped elegantly to the dynamic accent color
+    val lcdBorder = colorScheme.outline.copy(alpha = 0.65f)
+    val labelColor = colorScheme.onSurfaceVariant
     val activeAccent = accent
-    val teRed = Color(0xFFFF2D55) // Still useful for Reset/Stopped indicator
-    val teGrey = if (isDayMode) Color(0xFFCCCCCC) else Color(0xFF2E3238)
+    val teRed = colorScheme.error
+    val teGrey = colorScheme.outline
 
-    var isRunning by rememberSaveable { mutableStateOf(false) }
-    var driveTimeSeconds by rememberSaveable { mutableLongStateOf(0L) }
-    var idleTimeSeconds by rememberSaveable { mutableLongStateOf(0L) }
-    var totalSpeedSum by rememberSaveable { mutableDoubleStateOf(0.0) }
-    var movingSecondsCount by rememberSaveable { mutableLongStateOf(0L) }
-    var tripDistanceMeters by rememberSaveable { mutableDoubleStateOf(0.0) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
+    val isTrackingActive = lifecycleState.isAtLeast(Lifecycle.State.STARTED)
+
+    var isRunning by rememberSaveable { mutableStateOf(tripPreferences.getBoolean("running", false)) }
+    var driveTimeSeconds by rememberSaveable { mutableLongStateOf(tripPreferences.getLong("drive_seconds", 0L)) }
+    var idleTimeSeconds by rememberSaveable { mutableLongStateOf(tripPreferences.getLong("idle_seconds", 0L)) }
+    var movingDurationSeconds by rememberSaveable {
+        mutableDoubleStateOf(
+            tripPreferences.getString("moving_duration_seconds", null)?.toDoubleOrNull()
+                ?: tripPreferences.getLong("moving_seconds", 0L).toDouble()
+        )
+    }
+    var tripDistanceMeters by rememberSaveable { mutableDoubleStateOf(tripPreferences.getString("distance_meters", "0.0")?.toDoubleOrNull() ?: 0.0) }
+    var driveTimeFraction by remember { mutableDoubleStateOf(0.0) }
+    var idleTimeFraction by remember { mutableDoubleStateOf(0.0) }
+
+    fun persistTrip() {
+        tripPreferences.edit {
+            putBoolean("running", isRunning)
+            putLong("drive_seconds", driveTimeSeconds)
+            putLong("idle_seconds", idleTimeSeconds)
+            remove("speed_sum")
+            putString("moving_duration_seconds", movingDurationSeconds.toString())
+            putLong("moving_seconds", movingDurationSeconds.toLong())
+            putString("distance_meters", tripDistanceMeters.toString())
+        }
+    }
 
     // The trip loop is keyed on isRunning only, so it must read location through
     // rememberUpdatedState — a plain parameter capture would freeze the GPS fix
     // at the moment tracking started and the trip would record nothing.
     val currentLocation by rememberUpdatedState(location)
-
-    var activeMode by rememberSaveable { mutableStateOf("TRIP") } // "TRIP" or "0-100"
-    
-    // Accel Test state
-    var accelState by rememberSaveable { mutableStateOf("READY") } // "READY", "RUNNING", "COMPLETE"
-    var accelStartTime by rememberSaveable { mutableLongStateOf(0L) }
-    var accelEndTime by rememberSaveable { mutableLongStateOf(0L) }
-    var accelTimeDisplay by remember { mutableStateOf("0.00s") }
-    var bestAccelTime by rememberSaveable { mutableStateOf<Float?>(null) }
-    
-    var simSpeed by remember { mutableFloatStateOf(0f) }
-    var isSimulating by remember { mutableStateOf(false) }
-
-    val currentSpeedMps = location?.speedMps ?: 0f
-    val speedDisplay = if (isSimulating) simSpeed else (if (isMetric) currentSpeedMps * 3.6f else currentSpeedMps * 2.23694f)
-    val targetSpeed = if (isMetric) 100f else 60f
-    val targetSpeedUnit = if (isMetric) "KM/H" else "MPH"
-
-    // High precision stopwatch update loop
-    LaunchedEffect(accelState, accelStartTime) {
-        if (accelState == "RUNNING") {
-            while (accelState == "RUNNING") {
-                val elapsed = android.os.SystemClock.elapsedRealtime() - accelStartTime
-                accelTimeDisplay = "%.2fs".format(elapsed / 1000f)
-                delay(30)
-            }
-        } else if (accelState == "COMPLETE") {
-            accelTimeDisplay = "%.2fs".format((accelEndTime - accelStartTime) / 1000f)
-        } else {
-            accelTimeDisplay = "0.00s"
-        }
-    }
-
-    // GPS real-time speed run tracking
-    LaunchedEffect(location, activeMode) {
-        if (activeMode == "0-100" && !isSimulating) {
-            val speed = location?.speedMps ?: 0f
-            val speedDisplayVal = if (isMetric) speed * 3.6f else speed * 2.23694f
-            
-            if (accelState == "READY") {
-                if (speedDisplayVal > 0.8f) { // start timer when vehicle moves above 0.8 km/h or mph
-                    accelStartTime = android.os.SystemClock.elapsedRealtime()
-                    accelState = "RUNNING"
-                }
-            } else if (accelState == "RUNNING") {
-                if (speedDisplayVal >= targetSpeed) {
-                    accelEndTime = android.os.SystemClock.elapsedRealtime()
-                    accelState = "COMPLETE"
-                    val finalTime = (accelEndTime - accelStartTime) / 1000f
-                    bestAccelTime = if (bestAccelTime == null) finalTime else minOf(bestAccelTime!!, finalTime)
-                }
-            }
-        }
-    }
-
-    // Playful local test simulation loop (triggers when tapping speed layout while READY)
-    LaunchedEffect(isSimulating) {
-        if (isSimulating) {
-            accelStartTime = android.os.SystemClock.elapsedRealtime()
-            accelState = "RUNNING"
-            val simTarget = if (isMetric) 100f else 60f
-            simSpeed = 0f
-            while (simSpeed < simTarget + 5f && isSimulating && accelState == "RUNNING") {
-                delay(30)
-                val elapsed = (android.os.SystemClock.elapsedRealtime() - accelStartTime) / 1000f
-                simSpeed = elapsed * elapsed * 2.8f + elapsed * 8f
-                if (simSpeed >= simTarget) {
-                    accelEndTime = android.os.SystemClock.elapsedRealtime()
-                    accelState = "COMPLETE"
-                    val finalTime = (accelEndTime - accelStartTime) / 1000f
-                    bestAccelTime = if (bestAccelTime == null) finalTime else minOf(bestAccelTime!!, finalTime)
-                    break
-                }
-            }
-            isSimulating = false
-        } else {
-            simSpeed = 0f
-        }
-    }
+    val currentTrackingActive by rememberUpdatedState(isTrackingActive)
 
     // Trip update loop
     LaunchedEffect(isRunning) {
@@ -147,20 +102,31 @@ fun TripTrackerWidget(
             // Measure the real interval instead of assuming exactly 1 s per tick
             val dtSeconds = ((now - lastTickMs) / 1000.0).coerceIn(0.0, 5.0)
             lastTickMs = now
-            val currentSpeed = currentLocation?.speedMps ?: 0f
+            val currentSpeed = currentLocation?.let { fix ->
+                activeFreshSpeedMpsOrNull(
+                    isTrackingActive = currentTrackingActive,
+                    speedMps = fix.speedMps,
+                    capturedAtElapsedRealtimeMs = fix.capturedAtElapsedRealtimeMs,
+                    nowElapsedRealtimeMs = now
+                )
+            } ?: continue
             if (currentSpeed > 0.5f) {
-                driveTimeSeconds++
-                totalSpeedSum += currentSpeed
-                movingSecondsCount++
+                val elapsed = driveTimeFraction + dtSeconds
+                driveTimeSeconds += elapsed.toLong()
+                driveTimeFraction = elapsed % 1.0
+                movingDurationSeconds += dtSeconds
                 tripDistanceMeters += currentSpeed * dtSeconds
             } else {
-                idleTimeSeconds++
+                val elapsed = idleTimeFraction + dtSeconds
+                idleTimeSeconds += elapsed.toLong()
+                idleTimeFraction = elapsed % 1.0
             }
+            persistTrip()
         }
     }
 
     // Calculations
-    val averageSpeedMps = if (movingSecondsCount > 0) totalSpeedSum / movingSecondsCount else 0.0
+    val averageSpeedMps = tripAverageSpeedMps(tripDistanceMeters, movingDurationSeconds)
     val avgSpeedDisplay = if (isMetric) averageSpeedMps * 3.6 else averageSpeedMps * 2.23694
     val speedUnit = if (isMetric) "KM/H" else "MPH"
 
@@ -210,8 +176,7 @@ fun TripTrackerWidget(
                 .padding(horizontal = 10.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            if (activeMode == "TRIP") {
-                // Panel Column 1: Distance Readout
+            // Panel Column 1: Distance Readout
                 Column(
                     modifier = Modifier.weight(0.38f),
                     verticalArrangement = Arrangement.SpaceBetween
@@ -257,14 +222,14 @@ fun TripTrackerWidget(
                     // Hired/Time-Off Indicators
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
-                            text = "[RUNNING]",
+                            text = "[记录中]",
                             color = if (isRunning) activeAccent else dimDisplayColor,
                             fontSize = 6.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace
                         )
                         Text(
-                            text = "[STOPPED]",
+                            text = "[已暂停]",
                             color = if (!isRunning && (driveTimeSeconds > 0 || idleTimeSeconds > 0)) teRed else dimDisplayColor,
                             fontSize = 6.sp,
                             fontWeight = FontWeight.Bold,
@@ -356,144 +321,6 @@ fun TripTrackerWidget(
                             fontWeight = FontWeight.Bold
                         )
                     }
-                }
-            } else {
-                // ACCEL RUN DISPLAY (0-100 KM/H or 0-60 MPH Speed run)
-                Column(
-                    modifier = Modifier.weight(0.48f),
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = if (isMetric) "加速测试 // 0-100" else "加速测试 // 0-60",
-                        color = labelColor,
-                        fontSize = 6.5.sp,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp
-                    )
-                    
-                    Row(
-                        verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.BottomStart) {
-                            Text(
-                                text = "88.88",
-                                color = dimDisplayColor,
-                                fontSize = 24.sp,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = accelTimeDisplay.removeSuffix("s"),
-                                color = displayColor,
-                                fontSize = 24.sp,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        Text(
-                            text = "秒",
-                            color = displayColor,
-                            fontSize = 9.sp,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(bottom = 2.dp)
-                        )
-                    }
-                    
-                    // Acceleration Status indicators
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(
-                            text = "[READY]",
-                            color = if (accelState == "READY") activeAccent else dimDisplayColor,
-                            fontSize = 6.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Monospace
-                        )
-                        Text(
-                            text = "[RUNNING]",
-                            color = if (accelState == "RUNNING" || isSimulating) Color(0xFFE6A23C) else dimDisplayColor,
-                            fontSize = 6.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Monospace
-                        )
-                        Text(
-                            text = "[COMPLETE]",
-                            color = if (accelState == "COMPLETE") teRed else dimDisplayColor,
-                            fontSize = 6.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Monospace
-                        )
-                    }
-                }
-
-                Column(
-                    modifier = Modifier
-                        .weight(0.52f)
-                        .clickable(enabled = accelState == "READY") {
-                            isSimulating = true
-                        },
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.End
-                ) {
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = "速度 // 目标 %d".format(targetSpeed.toInt()),
-                            color = labelColor,
-                            fontSize = 6.5.sp,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.5.sp
-                        )
-                        Row(
-                            verticalAlignment = Alignment.Bottom,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.BottomEnd) {
-                                Text(
-                                    text = "888.8",
-                                    color = dimDisplayColor,
-                                    fontSize = 15.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = "%05.1f".format(speedDisplay),
-                                    color = displayColor,
-                                    fontSize = 15.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Text(
-                                text = targetSpeedUnit,
-                                color = displayColor,
-                                fontSize = 7.sp,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(bottom = 1.dp)
-                            )
-                        }
-                    }
-                    
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = if (accelState == "READY" && !isSimulating) "点击速度开始测试" else "最佳记录",
-                            color = if (accelState == "READY" && !isSimulating) activeAccent.copy(alpha = 0.7f) else labelColor,
-                            fontSize = 5.5.sp,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = if (bestAccelTime != null) "%.2fs".format(bestAccelTime) else "--.--s",
-                            color = if (bestAccelTime != null) activeAccent else displayColor,
-                            fontSize = 9.sp,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
             }
         }
 
@@ -506,63 +333,40 @@ fun TripTrackerWidget(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Button 1: OPR / RUN styled as a flat dynamic circular cap
-            val oprActive = if (activeMode == "0-100") (accelState == "RUNNING" || isSimulating) else isRunning
             TeTactileButton(
-                label = "开始",
+                label = if (isRunning) "暂停" else "开始",
                 keyColor = activeAccent,
-                active = oprActive,
+                active = isRunning,
                 onClick = {
-                    if (activeMode == "0-100") {
-                        isSimulating = false
-                        accelState = "READY"
-                        accelStartTime = 0L
-                        accelEndTime = 0L
-                    } else {
-                        isRunning = !isRunning
-                    }
-                },
-                isDayMode = isDayMode
+                    isRunning = !isRunning
+                    persistTrip()
+                }
             )
 
             // Button 2: RST / RESET
-            val canReset = if (activeMode == "0-100") {
-                accelState == "COMPLETE" || bestAccelTime != null
-            } else {
-                !isRunning && (driveTimeSeconds > 0 || idleTimeSeconds > 0)
-            }
+            val canReset = !isRunning && (driveTimeSeconds > 0 || idleTimeSeconds > 0)
             TeTactileButton(
                 label = "重置",
                 keyColor = teRed,
                 active = false,
                 enabled = canReset,
                 onClick = {
-                    if (activeMode == "0-100") {
-                        isSimulating = false
-                        accelState = "READY"
-                        accelStartTime = 0L
-                        accelEndTime = 0L
-                        bestAccelTime = null
-                    } else {
-                        driveTimeSeconds = 0L
-                        idleTimeSeconds = 0L
-                        totalSpeedSum = 0.0
-                        movingSecondsCount = 0L
-                        tripDistanceMeters = 0.0
-                    }
-                },
-                isDayMode = isDayMode
+                    driveTimeSeconds = 0L
+                    idleTimeSeconds = 0L
+                    movingDurationSeconds = 0.0
+                    tripDistanceMeters = 0.0
+                    driveTimeFraction = 0.0
+                    idleTimeFraction = 0.0
+                    persistTrip()
+                }
             )
 
-            // Button 3: EXTRAS (Toggles between TRIP info and 0-100 Accel Run)
             TeTactileButton(
-                label = "退出",
+                label = "实测",
                 keyColor = activeAccent,
-                active = activeMode == "0-100",
-                enabled = true,
-                onClick = {
-                    activeMode = if (activeMode == "TRIP") "0-100" else "TRIP"
-                },
-                isDayMode = isDayMode
+                active = true,
+                enabled = false,
+                onClick = {}
             )
 
             // Button 4: SET
@@ -571,8 +375,7 @@ fun TripTrackerWidget(
                 keyColor = teGrey,
                 active = false,
                 enabled = false,
-                onClick = {},
-                isDayMode = isDayMode
+                onClick = {}
             )
         }
     }
@@ -584,22 +387,21 @@ private fun TeTactileButton(
     keyColor: Color,
     active: Boolean,
     enabled: Boolean = true,
-    onClick: () -> Unit,
-    isDayMode: Boolean
+    onClick: () -> Unit
 ) {
-    val printedLabelColor = if (isDayMode) Color(0xFF666666) else androidx.compose.material3.MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f)
-    
+    val colorScheme = MaterialTheme.colorScheme
+    val printedLabelColor = colorScheme.onSurfaceVariant
     val buttonBg = if (!enabled) {
         Color.Transparent
     } else if (active) {
         keyColor
     } else {
-        if (isDayMode) Color(0xFFE5E7EB) else Color(0xFF1D2024)
+        colorScheme.surfaceVariant
     }
-    
-    val buttonBorder = if (isDayMode) Color(0xFFD1D5DB) else Color(0xFF2E3238)
+
+    val buttonBorder = colorScheme.outline
     val dotColor = if (active) {
-        if (isDayMode) Color.White else Color.Black
+        colorScheme.onPrimary
     } else {
         if (enabled) keyColor else keyColor.copy(alpha = 0.2f)
     }
@@ -625,7 +427,8 @@ private fun TeTactileButton(
                 .clip(CircleShape)
                 .background(buttonBg)
                 .border(1.dp, buttonBorder, CircleShape)
-                .clickable(enabled = enabled) { onClick() },
+                .semantics { contentDescription = label }
+                .clickable(enabled = enabled, role = Role.Button) { onClick() },
             contentAlignment = Alignment.Center
         ) {
             // Failsafe flat center indicator
@@ -638,4 +441,3 @@ private fun TeTactileButton(
         }
     }
 }
-

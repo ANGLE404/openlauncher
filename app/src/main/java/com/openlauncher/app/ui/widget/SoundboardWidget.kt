@@ -31,6 +31,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.net.toUri
+import com.openlauncher.app.R
 import com.openlauncher.app.data.SoundPadConfig
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -44,9 +46,9 @@ fun SoundboardWidget(
     modifier: Modifier = Modifier
 ) {
     val context      = LocalContext.current
-    val contentColor = if (isDayMode) Color(0xFF111111) else MaterialTheme.colorScheme.onBackground
-    val dimColor     = if (isDayMode) Color(0xFF888888) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-    val borderColor  = if (isDayMode) Color(0xFFE5E7EB) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f)
+    val contentColor = MaterialTheme.colorScheme.onSurface
+    val dimColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.75f)
 
     var activePadIndex by remember { mutableStateOf<Int?>(null) }
     var assigningIndex by remember { mutableStateOf<Int?>(null) }
@@ -147,11 +149,11 @@ private fun PadAssignDialog(
     onSave: (SoundPadConfig) -> Unit
 ) {
     val context    = LocalContext.current
-    val menuBg     = if (isDayMode) Color(0xFFF0F0F0) else MaterialTheme.colorScheme.background
-    val menuBorder = if (isDayMode) Color(0xFFCCCCCC) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f)
-    val contentColor = if (isDayMode) Color(0xFF111111) else MaterialTheme.colorScheme.onBackground
-    val dimColor   = if (isDayMode) Color(0xFF888888) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-    val fieldBorder = if (isDayMode) Color(0xFFCCCCCC) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)
+    val menuBg = MaterialTheme.colorScheme.surfaceVariant
+    val menuBorder = MaterialTheme.colorScheme.outline
+    val contentColor = MaterialTheme.colorScheme.onSurface
+    val dimColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val fieldBorder = MaterialTheme.colorScheme.outline.copy(alpha = 0.75f)
 
     var labelText   by remember { mutableStateOf(pad.label) }
     var synthType   by remember { mutableStateOf(pad.synthType) }
@@ -167,7 +169,7 @@ private fun PadAssignDialog(
                 )
             }
             audioUri = uri.toString()
-            val rawName = uri.path?.substringAfterLast('/') ?: "custom_sound"
+            val rawName = uri.path?.substringAfterLast('/') ?: "自定义音效"
             labelText = rawName.substringAfterLast(':').substringBeforeLast('.')
         }
     }
@@ -219,10 +221,10 @@ private fun PadAssignDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     val preloadedSounds = listOf(
-                        "mario_jump" to "mario_jump",
-                        "mario_coin" to "mario_coin",
-                        "boom" to "boom",
-                        "loud_fart" to "loud_fart"
+                        "mario_jump" to "跳跃",
+                        "mario_coin" to "金币",
+                        "boom" to "爆炸",
+                        "loud_fart" to "搞笑"
                     )
                     preloadedSounds.forEach { (type, chipLabel) ->
                         val active = synthType == type && audioUri.isEmpty()
@@ -236,7 +238,7 @@ private fun PadAssignDialog(
                                 .clickable { 
                                     synthType = type
                                     audioUri = ""
-                                    labelText = type
+                                    labelText = chipLabel
                                 },
                             contentAlignment = Alignment.Center
                         ) {
@@ -282,7 +284,7 @@ private fun PadAssignDialog(
                             onClick = { audioUri = "" },
                             modifier = Modifier.size(28.dp)
                         ) {
-                            Icon(Icons.Default.Clear, null, tint = dimColor, modifier = Modifier.size(14.dp))
+                            Icon(Icons.Default.Clear, "清除已选音频", tint = dimColor, modifier = Modifier.size(14.dp))
                         }
                     }
                 }
@@ -309,11 +311,11 @@ private fun PadAssignDialog(
                     },
                     modifier = Modifier.fillMaxWidth().height(32.dp),
                     shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF884444)),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF884444)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error),
                     contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text("清除音效", color = Color(0xFF884444), fontSize = 7.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+                    Text("清除音效", color = MaterialTheme.colorScheme.error, fontSize = 7.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -345,7 +347,7 @@ private fun PadAssignDialog(
                     colors = ButtonDefaults.buttonColors(containerColor = accent),
                     contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text("保存音效", color = if (isDayMode) Color.White else Color.Black, fontSize = 7.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+                    Text("保存音效", color = MaterialTheme.colorScheme.onPrimary, fontSize = 7.5.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -359,7 +361,7 @@ private fun playSoundPad(context: android.content.Context, pad: SoundPadConfig, 
             if (pad.audioUri.isNotEmpty()) {
                 val player = MediaPlayer()
                 try {
-                    player.setDataSource(context, android.net.Uri.parse(pad.audioUri))
+                    player.setDataSource(context, pad.audioUri.toUri())
                     player.setOnCompletionListener { mp ->
                         mp.release()
                         onDone()
@@ -381,33 +383,18 @@ private fun playSoundPad(context: android.content.Context, pad: SoundPadConfig, 
                     throw e
                 }
             } else {
-                var resName = pad.synthType.lowercase().trim()
-                var resId = context.resources.getIdentifier(resName, "raw", context.packageName)
-                if (resId == 0) {
-                    // Fallback mapping for legacy synth types saved in user settings
-                    resName = when (resName) {
-                        "horn", "beep", "alert" -> "mario_jump"
-                        "kick", "snare", "bass" -> "mario_coin"
-                        else -> "mario_jump"
-                    }
-                    resId = context.resources.getIdentifier(resName, "raw", context.packageName)
-                }
-                if (resId != 0) {
-                    val player = MediaPlayer.create(context, resId)
-                    if (player != null) {
-                        player.setOnCompletionListener { mp ->
-                            mp.release()
-                            onDone()
-                        }
-                        player.setOnErrorListener { mp, _, _ ->
-                            mp.release()
-                            onDone()
-                            true
-                        }
-                        player.start()
-                    } else {
+                val player = MediaPlayer.create(context, soundResourceId(pad.synthType))
+                if (player != null) {
+                    player.setOnCompletionListener { mp ->
+                        mp.release()
                         onDone()
                     }
+                    player.setOnErrorListener { mp, _, _ ->
+                        mp.release()
+                        onDone()
+                        true
+                    }
+                    player.start()
                 } else {
                     onDone()
                 }
@@ -417,4 +404,11 @@ private fun playSoundPad(context: android.content.Context, pad: SoundPadConfig, 
             onDone()
         }
     }
+}
+
+private fun soundResourceId(synthType: String): Int = when (synthType.lowercase().trim()) {
+    "mario_coin", "kick", "snare", "bass" -> R.raw.mario_coin
+    "boom" -> R.raw.boom
+    "loud_fart" -> R.raw.loud_fart
+    else -> R.raw.mario_jump
 }

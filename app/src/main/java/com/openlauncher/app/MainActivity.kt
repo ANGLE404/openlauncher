@@ -9,13 +9,17 @@ import androidx.activity.viewModels
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.net.toUri
 import androidx.compose.animation.*
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -23,11 +27,14 @@ import coil.compose.AsyncImage
 import com.openlauncher.app.data.DayNightMode
 import com.openlauncher.app.data.SidebarPosition
 import com.openlauncher.app.data.GradientDirection
+import com.openlauncher.app.data.shouldUseCustomBackground
+import com.openlauncher.app.data.shouldUseCustomGradient
 import com.openlauncher.app.model.NavDestination
 import com.openlauncher.app.ui.components.Sidebar
 import com.openlauncher.app.ui.screen.*
 import com.openlauncher.app.ui.theme.OpenLauncherTheme
-import com.openlauncher.app.ui.theme.palette
+import com.openlauncher.app.ui.theme.ThemeColors
+import com.openlauncher.app.ui.theme.defaultThemeColors
 import com.openlauncher.app.viewmodel.LauncherViewModel
 
 class MainActivity : ComponentActivity() {
@@ -68,6 +75,8 @@ class MainActivity : ComponentActivity() {
             val appsLoading by vm.appsLoading.collectAsStateWithLifecycle()
             val nowPlaying  by vm.nowPlaying.collectAsStateWithLifecycle()
             val weather     by vm.weather.collectAsStateWithLifecycle()
+            val weatherIsCached by vm.weatherIsCached.collectAsStateWithLifecycle()
+            val weatherCacheSavedAtMillis by vm.weatherCacheSavedAtMillis.collectAsStateWithLifecycle()
             val location    by vm.location.collectAsStateWithLifecycle()
             val bearing     by vm.compassBearing.collectAsStateWithLifecycle()
             val isWifi      by vm.isWifi.collectAsStateWithLifecycle()
@@ -79,25 +88,34 @@ class MainActivity : ComponentActivity() {
             val pickerSlot      by vm.shortcutPickerSlot.collectAsStateWithLifecycle()
             val appPickerTarget by vm.appPickerTarget.collectAsStateWithLifecycle()
 
-            val themePalette   = settings.dashboardTheme.palette()
-            val accent         = Color(settings.accentColor)
-            val bg             = if (settings.useCustomBackgroundColor) {
-                Color(settings.backgroundColor)
-            } else {
-                if (isDayMode) Color(0xFFEEEEEE) else themePalette.surface
+            val themeDefaults = settings.dashboardStyle.defaultThemeColors(
+                accent = Color(settings.accentColor),
+                isDayMode = isDayMode
+            ).let { colors ->
+                if (settings.useLegacyFontColor && !isDayMode) {
+                    colors.copy(primaryText = Color(settings.fontColor))
+                } else colors
             }
-            val textColor      = if (isDayMode) Color(0xFF111111) else Color(settings.fontColor)
-            val bgGradientEnd  = Color(settings.gradientEndColor)
-            val bgBrush        = if (settings.useCustomBackgroundColor && settings.useGradient) {
-                val colors = listOf(bg, bgGradientEnd)
-                when (settings.gradientDirection) {
-                    GradientDirection.TOP_TO_BOTTOM -> androidx.compose.ui.graphics.Brush.verticalGradient(colors)
-                    GradientDirection.LEFT_TO_RIGHT -> androidx.compose.ui.graphics.Brush.horizontalGradient(colors)
-                    GradientDirection.DIAGONAL -> androidx.compose.ui.graphics.Brush.linearGradient(colors)
-                    GradientDirection.RADIAL -> androidx.compose.ui.graphics.Brush.radialGradient(colors)
-                }
-            } else null
-
+            val configuredColors = ThemeColors(
+                accent = Color(settings.accentColor),
+                background = Color(settings.backgroundColor),
+                surface = Color(settings.surfaceColor),
+                elevatedSurface = Color(settings.overlayColor),
+                border = Color(settings.borderColor),
+                primaryText = Color(settings.fontColor),
+                secondaryText = Color(settings.secondaryTextColor),
+                glow = Color(settings.accentColor)
+            )
+            val baseThemeColors = if (settings.useCustomThemeColors) configuredColors else themeDefaults
+            val customBackground = Color(settings.backgroundColor)
+            val applyCustomBackground = settings.useCustomBackgroundColor && shouldUseCustomBackground(
+                isDayMode = isDayMode,
+                useFullCustomTheme = settings.useCustomThemeColors,
+                backgroundLuminance = customBackground.luminance()
+            )
+            val themeColors = baseThemeColors.copy(
+                background = if (applyCustomBackground) customBackground else baseThemeColors.background
+            )
             val baseDensity = LocalDensity.current
             CompositionLocalProvider(
                 LocalDensity provides Density(
@@ -108,15 +126,28 @@ class MainActivity : ComponentActivity() {
                 if (!settingsLoaded) {
                     Box(modifier = Modifier.fillMaxSize().background(Color.Black))
                 } else OpenLauncherTheme(
-                    accent     = accent,
-                    background = bg,
-                    textColor  = textColor,
+                    themeColors = themeColors,
                     fontBold   = settings.fontBold,
                     textScale  = settings.textScale,
                     appFont    = settings.appFont,
-                    isDayMode  = isDayMode,
-                    useCustomBg = settings.useCustomBackgroundColor
-                ) {
+                    isDayMode  = isDayMode
+                ) { animatedThemeColors ->
+                val accent = animatedThemeColors.accent
+                val bg = animatedThemeColors.background
+                val bgGradientEnd by animateColorAsState(
+                    targetValue = Color(settings.gradientEndColor),
+                    animationSpec = tween(420),
+                    label = "gradient_end_transition"
+                )
+                val bgBrush = if (shouldUseCustomGradient(applyCustomBackground, settings.useGradient)) {
+                    val colors = listOf(bg, bgGradientEnd)
+                    when (settings.gradientDirection) {
+                        GradientDirection.TOP_TO_BOTTOM -> androidx.compose.ui.graphics.Brush.verticalGradient(colors)
+                        GradientDirection.LEFT_TO_RIGHT -> androidx.compose.ui.graphics.Brush.horizontalGradient(colors)
+                        GradientDirection.DIAGONAL -> androidx.compose.ui.graphics.Brush.linearGradient(colors)
+                        GradientDirection.RADIAL -> androidx.compose.ui.graphics.Brush.radialGradient(colors)
+                    }
+                } else null
                 if (!settings.onboardingCompleted) {
                     OnboardingScreen(
                         accent = accent,
@@ -133,17 +164,18 @@ class MainActivity : ComponentActivity() {
                         // Optional wallpaper layer
                         if (settings.wallpaperUri.isNotEmpty()) {
                             AsyncImage(
-                                model              = android.net.Uri.parse(settings.wallpaperUri),
+                                model              = settings.wallpaperUri.toUri(),
                                 contentDescription = null,
                                 contentScale       = androidx.compose.ui.layout.ContentScale.Crop,
                                 modifier           = Modifier.fillMaxSize()
                             )
+                            val wallpaperDim = if (isDayMode) settings.wallpaperDim.coerceAtMost(0.35f) else settings.wallpaperDim
                             Box(modifier = Modifier.fillMaxSize()
-                                .background(Color.Black.copy(alpha = settings.wallpaperDim)))
+                                .background(Color.Black.copy(alpha = wallpaperDim)))
                         }
 
                         val isBottomBar    = settings.sidebarPosition == SidebarPosition.BOTTOM
-                        val layoutDivColor = if (isDayMode) Color(0xFFCCCCCC) else themePalette.glow.copy(alpha = 0.22f)
+                        val layoutDivColor = animatedThemeColors.border.copy(alpha = 0.55f)
 
                         val sidebarContent: @Composable () -> Unit = {
                             val sidebarDensity = Density(
@@ -193,6 +225,8 @@ class MainActivity : ComponentActivity() {
                                     NavDestination.HOME -> HomeScreen(
                                         settings            = settings,
                                         weather             = weather,
+                                        weatherIsCached     = weatherIsCached,
+                                        weatherCacheSavedAtMillis = weatherCacheSavedAtMillis,
                                         nowPlaying          = nowPlaying,
                                         location            = location,
                                         bearing             = bearing,

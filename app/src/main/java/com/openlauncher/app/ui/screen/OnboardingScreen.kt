@@ -13,6 +13,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,7 +28,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -33,6 +35,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.openlauncher.app.BuildConfig
 import com.openlauncher.app.data.AppSettings
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -154,7 +158,7 @@ fun OnboardingScreen(
                 }
 
                 Text(
-                    text = "v0.0.5",
+                    text = "v${BuildConfig.VERSION_NAME}",
                     color = Color(0xFF333333),
                     fontSize = 9.sp,
                     letterSpacing = 1.sp
@@ -202,7 +206,11 @@ fun OnboardingScreen(
                             })
                             2 -> MediaStep(accent, mediaGranted, onGrant = {
                                 runCatching {
-                                    context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                                    val notificationSettings = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
+                                    context.startActivity(
+                                        notificationSettings.takeIf { it.resolveActivity(context.packageManager) != null }
+                                            ?: Intent(Settings.ACTION_SETTINGS)
+                                    )
                                 }
                             })
                             3 -> FinalStep(accent, onSetDefault = {
@@ -229,7 +237,7 @@ fun OnboardingScreen(
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.height(44.dp)
                         ) {
-                            Icon(Icons.Default.ArrowBack, null, tint = Color(0xFF888888), modifier = Modifier.size(16.dp))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color(0xFF888888), modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(8.dp))
                             Text("返回", color = Color(0xFF888888), fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                         }
@@ -254,7 +262,7 @@ fun OnboardingScreen(
                         else -> "继续"
                     }
 
-                    val nextButtonIcon = if (currentStep == 3) Icons.Default.Check else Icons.Default.ArrowForward
+                    val nextButtonIcon = if (currentStep == 3) Icons.Default.Check else Icons.AutoMirrored.Filled.ArrowForward
 
                     if (isPrimary) {
                         Button(
@@ -355,7 +363,7 @@ private fun IntroStep(accent: Color) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             BulletItem(Icons.Default.CloudOff, "完全离线运行", "无需移动信号或网络连接。速度、指南针和高度计均可离线工作。")
             BulletItem(Icons.Default.Palette, "高度可定制的仪表盘", "自定义强调色、背景渐变、字体、单位，并拖动排列卡片。")
-            BulletItem(Icons.Default.VolumeUp, "音效板与媒体快捷方式", "触发自定义音效，管理 CarPlay、Android Auto 快捷方式并控制媒体播放器。")
+            BulletItem(Icons.AutoMirrored.Filled.VolumeUp, "音效板与媒体快捷方式", "触发自定义音效，管理 CarPlay、Android Auto 快捷方式并控制媒体播放器。")
         }
     }
 }
@@ -490,7 +498,7 @@ private fun MediaStep(accent: Color, isGranted: Boolean, onGrant: () -> Unit) {
                 colors = ButtonDefaults.buttonColors(containerColor = accent),
                 modifier = Modifier.height(44.dp)
             ) {
-                Icon(Icons.Default.VolumeUp, null, tint = Color.Black, modifier = Modifier.size(16.dp))
+                Icon(Icons.AutoMirrored.Filled.VolumeUp, null, tint = Color.Black, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("启用媒体监听", color = Color.Black, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, fontSize = 12.sp)
             }

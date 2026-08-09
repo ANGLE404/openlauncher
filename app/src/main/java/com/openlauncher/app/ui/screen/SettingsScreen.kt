@@ -12,6 +12,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.FormatAlignRight
+import androidx.compose.material.icons.automirrored.filled.ShortText
+import androidx.compose.material.icons.automirrored.filled.TrendingFlat
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -25,9 +29,11 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import com.openlauncher.app.data.AppFont
 import com.openlauncher.app.data.AppSettings
 import com.openlauncher.app.data.DashboardTheme
+import com.openlauncher.app.data.DashboardStyle
 import com.openlauncher.app.data.DayNightMode
 import com.openlauncher.app.data.SidebarPosition
 import com.openlauncher.app.data.ShortcutConfig
@@ -39,6 +45,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import com.openlauncher.app.ui.components.ColorPickerDialog
 import com.openlauncher.app.ui.components.ConfirmDialog
+import com.openlauncher.app.ui.theme.accent
+import com.openlauncher.app.ui.theme.defaultThemeColors
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.openlauncher.app.BuildConfig
 
 // Resolved at call site via LocalDayMode — see SettingsDivider / SettingsSection
 
@@ -56,6 +66,10 @@ fun SettingsScreen(
     var showBgPicker          by remember { mutableStateOf(false) }
     var showGradientEndPicker by remember { mutableStateOf(false) }
     var showFontColorPicker   by remember { mutableStateOf(false) }
+    var showSurfaceColorPicker by remember { mutableStateOf(false) }
+    var showOverlayColorPicker by remember { mutableStateOf(false) }
+    var showBorderColorPicker by remember { mutableStateOf(false) }
+    var showSecondaryTextColorPicker by remember { mutableStateOf(false) }
 
     // OpenDocument (not GetContent): only SAF document URIs carry a persistable
     // grant, so this is what actually keeps the wallpaper readable after reboot
@@ -91,7 +105,7 @@ fun SettingsScreen(
         Text(
             text          = "设置",
             style         = MaterialTheme.typography.titleLarge,
-            color         = if (isDayMode) Color(0xFF111111) else accent,
+            color         = MaterialTheme.colorScheme.onBackground,
             letterSpacing = 3.sp,
             fontSize      = 14.sp
         )
@@ -105,7 +119,7 @@ fun SettingsScreen(
             // Bumped on ON_RESUME so statuses refresh when the user returns from
             // system settings (recomposition alone doesn't re-run these checks)
             var permissionRefresh by remember { mutableIntStateOf(0) }
-            val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+            val lifecycleOwner = LocalLifecycleOwner.current
             DisposableEffect(lifecycleOwner) {
                 val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
                     if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) permissionRefresh++
@@ -120,9 +134,13 @@ fun SettingsScreen(
                 android.os.Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(context)
             }
             val hasLocation = remember(permissionRefresh) {
-                androidx.core.content.ContextCompat.checkSelfPermission(
+                val hasFine = androidx.core.content.ContextCompat.checkSelfPermission(
                     context, android.Manifest.permission.ACCESS_FINE_LOCATION
                 ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                val hasCoarse = androidx.core.content.ContextCompat.checkSelfPermission(
+                    context, android.Manifest.permission.ACCESS_COARSE_LOCATION
+                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                hasFine || hasCoarse
             }
             val isDefaultLauncher = remember(permissionRefresh) {
                 val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
@@ -144,7 +162,7 @@ fun SettingsScreen(
                 sublabel = if (isDefaultLauncher) "已启用，开放启动器是主页应用"
                            else "车机启动时进入开放启动器所需",
                 icon     = Icons.Default.Home,
-                accent   = if (isDefaultLauncher) accent else Color(0xFF993333),
+                accent   = if (isDefaultLauncher) accent else MaterialTheme.colorScheme.error,
                 onClick  = {
                     // Preferred: the system home-role dialog (API 29+). Vendor ROMs
                     // sometimes ship without it, so fall through to the home-settings
@@ -182,12 +200,12 @@ fun SettingsScreen(
                 label    = "通知访问",
                 sublabel = if (isMediaConnected) "已授予，媒体控制已启用" else "正在播放组件所需",
                 icon     = if (isMediaConnected) Icons.Default.NotificationsActive else Icons.Default.NotificationsOff,
-                accent   = if (isMediaConnected) accent else Color(0xFF993333),
+                accent   = if (isMediaConnected) accent else MaterialTheme.colorScheme.error,
                 onClick  = {
-                    context.startActivity(
-                        Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    )
+                    val notificationSettings = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
+                    val intent = notificationSettings.takeIf { it.resolveActivity(context.packageManager) != null }
+                        ?: Intent(Settings.ACTION_SETTINGS)
+                    context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 }
             )
             SettingsDivider()
@@ -195,14 +213,14 @@ fun SettingsScreen(
                 label    = "显示在其他应用上层",
                 sublabel = if (canDrawOverlays) "已授予，画中画浮窗已启用" else "画中画浮窗所需",
                 icon     = if (canDrawOverlays) Icons.Default.Layers else Icons.Default.LayersClear,
-                accent   = if (canDrawOverlays) accent else Color(0xFF993333),
+                accent   = if (canDrawOverlays) accent else MaterialTheme.colorScheme.error,
                 onClick  = {
                     if (android.os.Build.VERSION.SDK_INT >= 23) {
                         runCatching {
                             context.startActivity(
                                 Intent(
                                     Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                    Uri.parse("package:${context.packageName}")
+                                    "package:${context.packageName}".toUri()
                                 ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             )
                         }
@@ -214,7 +232,7 @@ fun SettingsScreen(
                 label    = "定位访问",
                 sublabel = if (hasLocation) "已授予，GPS、指南针和天气已启用" else "指南针、速度和天气所需",
                 icon     = if (hasLocation) Icons.Default.LocationOn else Icons.Default.LocationOff,
-                accent   = if (hasLocation) accent else Color(0xFF993333),
+                accent   = if (hasLocation) accent else MaterialTheme.colorScheme.error,
                 onClick  = {
                     if (!hasLocation) {
                         // Ask in-app first — previously the only grant path was the
@@ -228,7 +246,7 @@ fun SettingsScreen(
                             context.startActivity(
                                 Intent(
                                     Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                    Uri.parse("package:${context.packageName}")
+                                    "package:${context.packageName}".toUri()
                                 ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             )
                         }
@@ -238,7 +256,7 @@ fun SettingsScreen(
         }
 
         // ── Vehicle Name ─────────────────────────────────────────────────────
-        SettingsSection("Vehicle") {
+        SettingsSection("车辆") {
             var nameInput by remember(settings.vehicleName) { mutableStateOf(settings.vehicleName) }
             SettingsRow(
                 label    = "车辆名称",
@@ -249,15 +267,15 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value         = nameInput,
                         onValueChange = { nameInput = it },
-                        placeholder   = { Text("我的爱车", color = if (isDayMode) Color(0xFF999999) else Color(0xFF444444), fontSize = 12.sp) },
+                        placeholder   = { Text("我的爱车", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp) },
                         singleLine    = true,
-                        textStyle     = LocalTextStyle.current.copy(fontSize = 12.sp, color = if (isDayMode) Color(0xFF111111) else Color.White),
+                        textStyle     = LocalTextStyle.current.copy(fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface),
                         colors        = outlinedFieldColors(accent),
                         modifier      = Modifier.width(140.dp)
                     )
                     if (nameInput != settings.vehicleName) {
                         IconButton(onClick = { onUpdate { copy(vehicleName = nameInput) } }, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Check, "Save", tint = accent, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Check, "保存", tint = accent, modifier = Modifier.size(16.dp))
                         }
                     }
                 }
@@ -282,8 +300,8 @@ fun SettingsScreen(
                             label    = {
                                 Text(
                                     when (pos) {
-                                        SidebarPosition.LEFT   -> "Left"
-                                        SidebarPosition.RIGHT  -> "Right"
+                                        SidebarPosition.LEFT   -> "左侧"
+                                        SidebarPosition.RIGHT  -> "右侧"
                                         SidebarPosition.BOTTOM -> "底部"
                                     },
                                     fontSize = 9.sp,
@@ -292,7 +310,7 @@ fun SettingsScreen(
                             },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = accent,
-                                selectedLabelColor     = Color.Black
+                                selectedLabelColor     = MaterialTheme.colorScheme.onPrimary
                             )
                         )
                     }
@@ -304,7 +322,7 @@ fun SettingsScreen(
                 SettingsRow(
                     label    = "快捷方式位置",
                     sublabel = if (settings.bottomBarShortcutsRight) "右侧，导航按钮在左" else "左侧，导航按钮在右",
-                    icon     = Icons.Default.FormatAlignRight
+                    icon     = Icons.AutoMirrored.Filled.FormatAlignRight
                 ) {
                     Switch(
                         checked         = settings.bottomBarShortcutsRight,
@@ -324,7 +342,7 @@ fun SettingsScreen(
                         label    = { Text("公制", fontSize = 11.sp) },
                         colors   = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = accent,
-                            selectedLabelColor     = Color.Black
+                            selectedLabelColor     = MaterialTheme.colorScheme.onPrimary
                         )
                     )
                     Spacer(Modifier.width(6.dp))
@@ -334,7 +352,7 @@ fun SettingsScreen(
                         label    = { Text("英制", fontSize = 11.sp) },
                         colors   = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = accent,
-                            selectedLabelColor     = Color.Black
+                            selectedLabelColor     = MaterialTheme.colorScheme.onPrimary
                         )
                     )
                 }
@@ -342,7 +360,7 @@ fun SettingsScreen(
         }
 
         // ── Sidebar Shortcuts ─────────────────────────────────────────────────
-        SettingsSection("Sidebar") {
+        SettingsSection("侧边栏") {
             settings.shortcuts.forEachIndexed { index, shortcut ->
                 if (index > 0) SettingsDivider()
                 SettingsRow(
@@ -363,7 +381,7 @@ fun SettingsScreen(
                             },
                             modifier = Modifier.size(32.dp)
                         ) {
-                            Icon(Icons.Default.Close, null, tint = Color(0xFF993333), modifier = Modifier.size(14.dp))
+                            Icon(Icons.Default.Close, "删除快捷方式", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(14.dp))
                         }
                     }
                 }
@@ -409,7 +427,7 @@ fun SettingsScreen(
                                         DayNightMode.DARK   -> "深色"
                                         DayNightMode.LIGHT  -> "浅色"
                                         DayNightMode.AUTO   -> "日落"
-                                        DayNightMode.SYSTEM -> "System"
+                                        DayNightMode.SYSTEM -> "系统"
                                     },
                                     fontSize  = 9.sp,
                                     letterSpacing = 0.5.sp
@@ -417,7 +435,43 @@ fun SettingsScreen(
                             },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = accent,
-                                selectedLabelColor     = Color.Black
+                                selectedLabelColor     = MaterialTheme.colorScheme.onPrimary
+                            )
+                        )
+                    }
+                }
+            }
+
+            SettingsDivider()
+
+            SettingsRow(
+                label = "主题风格",
+                sublabel = when (settings.dashboardStyle) {
+                    DashboardStyle.OEM -> "精致 OEM"
+                    DashboardStyle.CYBER -> "赛博科技"
+                    DashboardStyle.GLASS -> "极简玻璃"
+                },
+                icon = Icons.Default.AutoAwesome
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    DashboardStyle.entries.forEach { style ->
+                        FilterChip(
+                            selected = settings.dashboardStyle == style,
+                            onClick = { onUpdate { withThemeDefaults(isDayMode = isDayMode, style = style) } },
+                            label = {
+                                Text(
+                                    when (style) {
+                                        DashboardStyle.OEM -> "OEM"
+                                        DashboardStyle.CYBER -> "赛博"
+                                        DashboardStyle.GLASS -> "玻璃"
+                                    },
+                                    fontSize = 9.sp,
+                                    letterSpacing = 0.5.sp
+                                )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = accent,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
                             )
                         )
                     }
@@ -446,7 +500,7 @@ fun SettingsScreen(
             // Background color + gradient
             SettingsRow(
                 label    = "背景",
-                sublabel = if (settings.useGradient) "Gradient" else "纯色",
+                sublabel = if (settings.useGradient) "渐变" else "纯色",
                 icon     = Icons.Default.FormatColorFill
             ) {
                 Row(
@@ -463,8 +517,8 @@ fun SettingsScreen(
                     )
                     if (settings.useGradient) {
                         androidx.compose.material3.Icon(
-                            Icons.Default.ArrowForward, null,
-                            tint = if (isDayMode) Color(0xFF999999) else Color(0xFF555555), modifier = Modifier.size(14.dp)
+                                Icons.AutoMirrored.Filled.ArrowForward, null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp)
                         )
                         // End color swatch
                         Box(
@@ -479,9 +533,13 @@ fun SettingsScreen(
                         TextButton(
                             onClick = {
                                 onUpdate {
+                                    val defaultBackground = dashboardStyle.defaultThemeColors(
+                                        Color(accentColor),
+                                        isDayMode
+                                    ).background
                                     copy(
                                         useCustomBackgroundColor = false,
-                                        backgroundColor = Color.Black.toArgb(),
+                                        backgroundColor = defaultBackground.toArgb(),
                                         useGradient = false
                                     )
                                 }
@@ -498,7 +556,7 @@ fun SettingsScreen(
             SettingsDivider()
 
             SettingsRow(
-                label = "主题预设",
+                label = "快捷主题色",
                 sublabel = when (settings.dashboardTheme) {
                     DashboardTheme.ICE_BLUE -> "冰蓝科技"
                     DashboardTheme.TRACK_ORANGE -> "赛道橙"
@@ -523,7 +581,7 @@ fun SettingsScreen(
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(color)
                                 .clickable {
-                                    onUpdate { copy(dashboardTheme = theme, accentColor = color.toArgb()) }
+                                onUpdate { withThemeDefaults(isDayMode = isDayMode, theme = theme) }
                                 }
                         )
                     }
@@ -549,6 +607,57 @@ fun SettingsScreen(
 
             SettingsDivider()
 
+            SettingsRow(
+                label = "卡片颜色",
+                sublabel = "组件与主卡片表面",
+                icon = Icons.Default.ViewAgenda
+            ) {
+                ThemeColorSwatch(Color(settings.surfaceColor)) { showSurfaceColorPicker = true }
+            }
+
+            SettingsDivider()
+
+            SettingsRow(
+                label = "浮层颜色",
+                sublabel = "菜单、输入框与次级表面",
+                icon = Icons.Default.Layers
+            ) {
+                ThemeColorSwatch(Color(settings.overlayColor)) { showOverlayColorPicker = true }
+            }
+
+            SettingsDivider()
+
+            SettingsRow(
+                label = "边框颜色",
+                sublabel = "卡片、控件与分割线",
+                icon = Icons.Default.CropSquare
+            ) {
+                ThemeColorSwatch(Color(settings.borderColor)) { showBorderColorPicker = true }
+            }
+
+            SettingsDivider()
+
+            SettingsRow(
+                label = "次级文字颜色",
+                sublabel = "说明、标签与辅助信息",
+                        icon = Icons.AutoMirrored.Filled.ShortText
+            ) {
+                ThemeColorSwatch(Color(settings.secondaryTextColor)) { showSecondaryTextColorPicker = true }
+            }
+
+            SettingsDivider()
+
+            if (settings.useCustomThemeColors || settings.useCustomBackgroundColor) {
+                TextButton(
+                    onClick = { onUpdate { withThemeDefaults(isDayMode = isDayMode) } },
+                    contentPadding = PaddingValues(horizontal = 6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("恢复主题默认颜色", color = accent, fontSize = 10.sp, letterSpacing = 0.5.sp)
+                }
+                SettingsDivider()
+            }
+
             SettingsRow(label = "使用渐变", sublabel = "混合两种颜色作为背景", icon = Icons.Default.Gradient) {
                 Switch(checked = settings.useGradient,
                     onCheckedChange = { onUpdate { copy(useGradient = it) } },
@@ -565,7 +674,7 @@ fun SettingsScreen(
                         GradientDirection.DIAGONAL      -> "对角（线性）"
                         GradientDirection.RADIAL        -> "径向（圆形）"
                     },
-                    icon     = Icons.Default.TrendingFlat
+                    icon     = Icons.AutoMirrored.Filled.TrendingFlat
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         GradientDirection.entries.forEach { dir ->
@@ -586,7 +695,7 @@ fun SettingsScreen(
                                 },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = accent,
-                                    selectedLabelColor     = Color.Black
+                                    selectedLabelColor     = MaterialTheme.colorScheme.onPrimary
                                 )
                             )
                         }
@@ -624,7 +733,7 @@ fun SettingsScreen(
                         onClick  = { onUpdate { copy(wallpaperUri = "") } },
                         modifier = Modifier.align(Alignment.End)
                     ) {
-                        Text("移除壁纸", color = Color(0xFF993333), fontSize = 9.sp, letterSpacing = 1.sp)
+                        Text("移除壁纸", color = MaterialTheme.colorScheme.error, fontSize = 9.sp, letterSpacing = 1.sp)
                     }
                 }
             }
@@ -641,7 +750,7 @@ fun SettingsScreen(
                             label    = { Text(fontDisplayName(font), fontSize = 9.sp, letterSpacing = 0.5.sp) },
                             colors   = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = accent,
-                                selectedLabelColor     = Color.Black
+                                selectedLabelColor     = MaterialTheme.colorScheme.onPrimary
                             )
                         )
                     }
@@ -681,7 +790,7 @@ fun SettingsScreen(
             Column {
                 SettingsRow(
                     label    = "界面缩放",
-                    sublabel = "${"%.0f".format(settings.uiScale * 100)}%  — scales all elements",
+                    sublabel = "${"%.0f".format(settings.uiScale * 100)}%  ·  缩放所有界面元素",
                     icon     = Icons.Default.ZoomIn
                 ) {}
                 Slider(
@@ -789,7 +898,7 @@ fun SettingsScreen(
                 icon     = Icons.Default.SystemUpdate,
                 accent   = accent,
                 onClick  = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/dw2lam/openlauncher/releases"))
+                    val intent = Intent(Intent.ACTION_VIEW, "https://github.com/ANGLE404/openlauncher/releases".toUri())
                     context.startActivity(intent)
                 }
             )
@@ -801,7 +910,7 @@ fun SettingsScreen(
             Button(
                 onClick  = { showResetDialog = true },
                 shape    = RoundedCornerShape(10.dp),
-                colors   = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A0000)),
+                colors   = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer),
                 modifier = Modifier.fillMaxWidth().height(44.dp)
             ) {
                 Icon(Icons.Default.RestartAlt, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
@@ -814,8 +923,8 @@ fun SettingsScreen(
         Spacer(Modifier.height(32.dp))
 
         Text(
-            text          = "v0.0.5  ·  ayc404 制作  ·  2026",
-            color         = if (isDayMode) Color(0xFFAAAAAA) else Color(0xFF2A2A2A),
+            text          = "v${BuildConfig.VERSION_NAME}  ·  ayc404 制作  ·  2026",
+            color         = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.62f),
             fontSize      = 10.sp,
             letterSpacing = 1.sp,
             modifier      = Modifier
@@ -830,7 +939,7 @@ fun SettingsScreen(
         ConfirmDialog(
             title        = "重置设置",
             message      = "确定要将所有设置恢复默认吗？此操作无法撤销。",
-            confirmLabel = "Reset",
+            confirmLabel = "确认重置",
             onConfirm    = { onReset(); showResetDialog = false },
             onDismiss    = { showResetDialog = false }
         )
@@ -840,7 +949,7 @@ fun SettingsScreen(
         ColorPickerDialog(
             title           = "强调色",
             initialColor    = Color(settings.accentColor),
-            onColorSelected = { c -> onUpdate { copy(accentColor = c.toArgb()) } },
+            onColorSelected = { c -> onUpdate { withThemeOverrides(isDayMode).copy(accentColor = c.toArgb()) } },
             onDismiss       = { showAccentPicker = false }
         )
     }
@@ -851,7 +960,7 @@ fun SettingsScreen(
             initialColor    = Color(settings.backgroundColor),
             onColorSelected = { c -> 
                 onUpdate { 
-                    copy(
+                    withThemeOverrides(isDayMode).copy(
                         backgroundColor = c.toArgb(),
                         useCustomBackgroundColor = true
                     ) 
@@ -867,7 +976,7 @@ fun SettingsScreen(
             initialColor    = Color(settings.gradientEndColor),
             onColorSelected = { c -> 
                 onUpdate { 
-                    copy(
+                    withThemeOverrides(isDayMode).copy(
                         gradientEndColor = c.toArgb(),
                         useCustomBackgroundColor = true
                     ) 
@@ -881,8 +990,44 @@ fun SettingsScreen(
         ColorPickerDialog(
             title           = "字体颜色",
             initialColor    = Color(settings.fontColor),
-            onColorSelected = { c -> onUpdate { copy(fontColor = c.toArgb()) } },
+            onColorSelected = { c -> onUpdate { withThemeOverrides(isDayMode).copy(fontColor = c.toArgb()) } },
             onDismiss       = { showFontColorPicker = false }
+        )
+    }
+
+    if (showSurfaceColorPicker) {
+        ColorPickerDialog(
+            title = "卡片颜色",
+            initialColor = Color(settings.surfaceColor),
+            onColorSelected = { c -> onUpdate { withThemeOverrides(isDayMode).copy(surfaceColor = c.toArgb()) } },
+            onDismiss = { showSurfaceColorPicker = false }
+        )
+    }
+
+    if (showOverlayColorPicker) {
+        ColorPickerDialog(
+            title = "浮层颜色",
+            initialColor = Color(settings.overlayColor),
+            onColorSelected = { c -> onUpdate { withThemeOverrides(isDayMode).copy(overlayColor = c.toArgb()) } },
+            onDismiss = { showOverlayColorPicker = false }
+        )
+    }
+
+    if (showBorderColorPicker) {
+        ColorPickerDialog(
+            title = "边框颜色",
+            initialColor = Color(settings.borderColor),
+            onColorSelected = { c -> onUpdate { withThemeOverrides(isDayMode).copy(borderColor = c.toArgb()) } },
+            onDismiss = { showBorderColorPicker = false }
+        )
+    }
+
+    if (showSecondaryTextColorPicker) {
+        ColorPickerDialog(
+            title = "次级文字颜色",
+            initialColor = Color(settings.secondaryTextColor),
+            onColorSelected = { c -> onUpdate { withThemeOverrides(isDayMode).copy(secondaryTextColor = c.toArgb()) } },
+            onDismiss = { showSecondaryTextColorPicker = false }
         )
     }
 }
@@ -890,13 +1035,61 @@ fun SettingsScreen(
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 @Composable
+private fun ThemeColorSwatch(color: Color, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(color)
+            .clickable(onClick = onClick)
+    )
+}
+
+private fun AppSettings.withThemeDefaults(
+    isDayMode: Boolean,
+    style: DashboardStyle = dashboardStyle,
+    theme: DashboardTheme = dashboardTheme
+): AppSettings {
+    val colors = style.defaultThemeColors(theme.accent(), isDayMode)
+    return copy(
+        dashboardStyle = style,
+        dashboardTheme = theme,
+        accentColor = colors.accent.toArgb(),
+        backgroundColor = colors.background.toArgb(),
+        fontColor = colors.primaryText.toArgb(),
+        surfaceColor = colors.surface.toArgb(),
+        overlayColor = colors.elevatedSurface.toArgb(),
+        borderColor = colors.border.toArgb(),
+        secondaryTextColor = colors.secondaryText.toArgb(),
+        useCustomThemeColors = false,
+        useCustomBackgroundColor = false,
+        useGradient = false
+    )
+}
+
+private fun AppSettings.withThemeOverrides(isDayMode: Boolean): AppSettings {
+    if (useCustomThemeColors) return this
+
+    val colors = dashboardStyle.defaultThemeColors(Color(accentColor), isDayMode)
+    return copy(
+        accentColor = colors.accent.toArgb(),
+        backgroundColor = if (useCustomBackgroundColor) backgroundColor else colors.background.toArgb(),
+        fontColor = colors.primaryText.toArgb(),
+        surfaceColor = colors.surface.toArgb(),
+        overlayColor = colors.elevatedSurface.toArgb(),
+        borderColor = colors.border.toArgb(),
+        secondaryTextColor = colors.secondaryText.toArgb(),
+        useCustomThemeColors = true
+    )
+}
+
+@Composable
 private fun SettingsSection(
     title: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val isDayMode     = LocalDayMode.current
-    val sectionColor  = if (isDayMode) Color(0xFF888888) else Color(0xFF3A3A3A)
-    val dividerColor  = if (isDayMode) Color(0xFFCCCCCC) else Color(0xFF1E1E1E)
+    val sectionColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val dividerColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)
     Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
         Text(
             text          = title.uppercase(),
@@ -918,10 +1111,9 @@ private fun SettingsRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     content: @Composable RowScope.() -> Unit
 ) {
-    val isDayMode   = LocalDayMode.current
-    val labelColor  = if (isDayMode) Color(0xFF111111) else Color(0xFFDDDDDD)
-    val subColor    = if (isDayMode) Color(0xFF888888) else Color(0xFF444444)
-    val iconTint    = if (isDayMode) Color(0xFF777777) else MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
+    val labelColor = MaterialTheme.colorScheme.onSurface
+    val subColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val iconTint = MaterialTheme.colorScheme.primary.copy(alpha = 0.72f)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -947,11 +1139,10 @@ private fun ColumnScope.SettingsButton(
     accent: Color,
     onClick: () -> Unit
 ) {
-    val isDayMode  = LocalDayMode.current
-    val labelColor = if (isDayMode) Color(0xFF111111) else Color(0xFFDDDDDD)
-    val subColor   = if (isDayMode) Color(0xFF888888) else Color(0xFF444444)
-    val chevronC   = if (isDayMode) Color(0xFFBBBBBB) else Color(0xFF2A2A2A)
-    val iconTint   = if (isDayMode) Color(0xFF777777) else MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
+    val labelColor = MaterialTheme.colorScheme.onSurface
+    val subColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val chevronC = MaterialTheme.colorScheme.outline
+    val iconTint = MaterialTheme.colorScheme.primary.copy(alpha = 0.72f)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -972,15 +1163,13 @@ private fun ColumnScope.SettingsButton(
 
 @Composable
 private fun ColumnScope.SettingsDivider() {
-    val isDayMode = LocalDayMode.current
-    HorizontalDivider(color = if (isDayMode) Color(0xFFDDDDDD) else Color(0xFF141414))
+    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
 }
 
 @Composable
 private fun outlinedFieldColors(accent: Color): androidx.compose.material3.TextFieldColors {
-    val isDayMode = LocalDayMode.current
-    val textColor = if (isDayMode) Color(0xFF111111) else Color.White
-    val borderU   = if (isDayMode) Color(0xFFCCCCCC) else Color(0xFF2A2A2A)
+    val textColor = MaterialTheme.colorScheme.onSurface
+    val borderU = MaterialTheme.colorScheme.outline
     return OutlinedTextFieldDefaults.colors(
         focusedBorderColor   = accent,
         unfocusedBorderColor = borderU,
@@ -988,35 +1177,33 @@ private fun outlinedFieldColors(accent: Color): androidx.compose.material3.TextF
         unfocusedTextColor   = textColor,
         cursorColor          = accent,
         focusedLabelColor    = accent,
-        unfocusedLabelColor  = if (isDayMode) Color(0xFF888888) else Color(0xFF666666)
+        unfocusedLabelColor  = MaterialTheme.colorScheme.onSurfaceVariant
     )
 }
 
 @Composable
 private fun switchColors(accent: Color): androidx.compose.material3.SwitchColors {
-    val isDayMode = LocalDayMode.current
     return SwitchDefaults.colors(
-        checkedThumbColor    = if (isDayMode) Color.White else Color.Black,
+        checkedThumbColor    = MaterialTheme.colorScheme.onPrimary,
         checkedTrackColor    = accent,
-        uncheckedThumbColor  = if (isDayMode) Color(0xFFBBBBBB) else Color(0xFF888888),
-        uncheckedTrackColor  = if (isDayMode) Color(0xFFDDDDDD) else Color(0xFF1E1E1E),
-        uncheckedBorderColor = if (isDayMode) Color(0xFFCCCCCC) else Color(0xFF3A3A3A)
+        uncheckedThumbColor  = MaterialTheme.colorScheme.onSurfaceVariant,
+        uncheckedTrackColor  = MaterialTheme.colorScheme.surfaceVariant,
+        uncheckedBorderColor = MaterialTheme.colorScheme.outline
     )
 }
 
 @Composable
 private fun sliderColors(accent: Color): androidx.compose.material3.SliderColors {
-    val isDayMode = LocalDayMode.current
     return SliderDefaults.colors(
         thumbColor         = accent,
         activeTrackColor   = accent,
-        inactiveTrackColor = if (isDayMode) Color(0xFFCCCCCC) else Color(0xFF2A2A2A)
+        inactiveTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)
     )
 }
 
 
 private fun fontDisplayName(font: AppFont): String = when (font) {
-    AppFont.SYSTEM          -> "System"
+    AppFont.SYSTEM          -> "系统字体"
     AppFont.NOTO_SANS_SC    -> "Noto Sans SC"
     AppFont.JETBRAINS_MONO  -> "JetBrains Mono"
     AppFont.SOURCE_CODE_PRO -> "Source Code Pro"

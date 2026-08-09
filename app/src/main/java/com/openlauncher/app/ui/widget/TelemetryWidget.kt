@@ -6,6 +6,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.Alignment
@@ -29,8 +33,13 @@ fun TelemetryWidget(
     isDayMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    var unwrappedBearing by remember { mutableFloatStateOf(bearing) }
+    LaunchedEffect(bearing) {
+        val delta = ((bearing - unwrappedBearing + 540f) % 360f) - 180f
+        unwrappedBearing += delta
+    }
     val smoothBearing by animateFloatAsState(
-        targetValue = bearing,
+        targetValue = unwrappedBearing,
         animationSpec = tween(420),
         label = "compass_smoothing"
     )

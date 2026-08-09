@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import com.openlauncher.app.model.AppInfo
-import com.openlauncher.app.ui.theme.LocalDayMode
 
 private enum class AppFilter { USER, SYSTEM, ALL }
 
@@ -48,14 +47,13 @@ fun AppLibraryScreen(
     onCarPlaySelect: (AppInfo) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isDayMode     = LocalDayMode.current
     val screenBg      = MaterialTheme.colorScheme.background
     val headerColor   = MaterialTheme.colorScheme.onBackground
-    val placeholderC  = if (isDayMode) Color(0xFF999999) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-    val dividerColor  = if (isDayMode) Color(0xFFCCCCCC) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
-    val emptyColor    = if (isDayMode) Color(0xFF888888) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+    val placeholderC  = MaterialTheme.colorScheme.onSurfaceVariant
+    val dividerColor  = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f)
+    val emptyColor    = MaterialTheme.colorScheme.onSurfaceVariant
     val fieldTextC    = MaterialTheme.colorScheme.onBackground
-    val fieldBorderU  = if (isDayMode) Color(0xFFCCCCCC) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)
+    val fieldBorderU  = MaterialTheme.colorScheme.outline
 
     val anyPickerMode = isPickerMode || isCarPlayPickerMode
     var query     by remember { mutableStateOf("") }
@@ -102,9 +100,9 @@ fun AppLibraryScreen(
                             label    = {
                                 Text(
                                     when (filter) {
-                                        AppFilter.USER   -> "Installed"
-                                        AppFilter.SYSTEM -> "System"
-                                        AppFilter.ALL    -> "All"
+                                        AppFilter.USER   -> "已安装"
+                                        AppFilter.SYSTEM -> "系统"
+                                        AppFilter.ALL    -> "全部"
                                     },
                                     fontSize = 9.sp,
                                     letterSpacing = 0.5.sp
@@ -112,7 +110,7 @@ fun AppLibraryScreen(
                             },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = accent,
-                                selectedLabelColor     = Color.Black,
+                                selectedLabelColor     = MaterialTheme.colorScheme.onPrimary,
                                 labelColor             = placeholderC
                             )
                         )
@@ -199,9 +197,8 @@ private fun AppTile(
     accent: Color,
     onClick: () -> Unit
 ) {
-    val isDayMode  = LocalDayMode.current
-    val tileBg     = if (isDayMode) Color(0xFFFFFFFF) else Color(0xFF0B0B0B)
-    val tileBorder = if (isDayMode) Color(0xFFCCCCCC) else Color(0xFF1A1A1A)
+    val tileBg     = MaterialTheme.colorScheme.surface
+    val tileBorder = MaterialTheme.colorScheme.outline.copy(alpha = 0.65f)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -231,7 +228,7 @@ private fun AppTile(
         Text(
             text          = app.appName.uppercase(),
             style         = MaterialTheme.typography.labelSmall,
-            color         = if (isDayMode) Color(0xFF666666) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+            color         = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines      = 1,
             overflow      = TextOverflow.Ellipsis,
             textAlign     = TextAlign.Center,

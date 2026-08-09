@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Network for weather API -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -15,19 +16,10 @@
     <!-- Required for LocationManager.sendExtraCommand (A-GPS reset) — normal protection, auto-granted -->
     <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS" />
 
-    <!-- Compass / sensors -->
-    <uses-permission android:name="android.permission.BODY_SENSORS" />
-
-    <!-- Media session control (requires notification access grant by user) -->
-    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
-
-    <!-- Wallpaper from gallery -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
-
     <!-- Query all packages required on API 30+ for getInstalledApplications -->
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
 
     <!-- Required on API 30+ so PackageManager returns ALL launcher apps -->
     <queries>
@@ -53,7 +45,8 @@
             android:launchMode="singleTask"
             android:screenOrientation="sensorLandscape"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:windowSoftInputMode="adjustNothing">
+            android:windowSoftInputMode="adjustNothing"
+            tools:ignore="DiscouragedApi">
 
             <!-- HOME launcher intent filters -->
             <intent-filter>
