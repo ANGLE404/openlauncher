@@ -114,7 +114,7 @@ fun AltimeterWidget(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "ALTITUDE",
+                text = "海拔",
                 color = labelColor,
                 fontSize = 7.sp,
                 letterSpacing = 1.sp,
@@ -153,11 +153,11 @@ fun AltimeterWidget(
             verticalAlignment     = Alignment.Bottom
         ) {
             Column {
-                Text("ROLL",  color = labelColor, fontSize = 7.sp, letterSpacing = 1.sp)
+                Text("横滚",  color = labelColor, fontSize = 7.sp, letterSpacing = 1.sp)
                 Text("%.1f°".format(displayRoll),  color = accent, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text("PITCH", color = labelColor, fontSize = 7.sp, letterSpacing = 1.sp, textAlign = TextAlign.End)
+                Text("俯仰", color = labelColor, fontSize = 7.sp, letterSpacing = 1.sp, textAlign = TextAlign.End)
                 Text("%.1f°".format(displayPitch), color = accent, fontSize = 12.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
             }
         }

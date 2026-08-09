@@ -90,7 +90,7 @@ fun NowPlayingWidget(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .clip(RoundedCornerShape(4.dp))
+            .clip(RoundedCornerShape(10.dp))
     ) {
         // 1. CONDITIONAL VIEW TOGGLE
         if (selectedSource == "FM/AM 收音机") {
@@ -238,8 +238,8 @@ private fun RadioDeck(
             Box(
                 modifier = Modifier
                     .height(26.dp)
-                    .border(1.dp, accent.copy(alpha = 0.6f), RoundedCornerShape(3.dp))
-                    .clip(RoundedCornerShape(3.dp))
+                    .border(1.dp, accent.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(8.dp))
                     .clickable { onAssignRadio() }
                     .padding(horizontal = 12.dp),
                 contentAlignment = Alignment.Center
@@ -291,9 +291,9 @@ private fun RadioDeck(
                         Box(
                             modifier = Modifier
                                 .height(22.dp)
-                                .clip(RoundedCornerShape(3.dp))
+                                .clip(RoundedCornerShape(8.dp))
                                 .background(if (active) chipActiveBg else chipInactiveBg)
-                                .border(1.dp, if (active) borderColor else borderColor.copy(alpha = 0.5f), RoundedCornerShape(3.dp))
+                                .border(1.dp, if (active) borderColor else borderColor.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
                                 .clickable { if (b == "AM") onRadioSwitchAm() else onRadioCycleFm() }
                                 .padding(horizontal = 8.dp),
                             contentAlignment = Alignment.Center
@@ -312,9 +312,9 @@ private fun RadioDeck(
                 Box(
                     modifier = Modifier
                         .height(22.dp)
-                        .clip(RoundedCornerShape(3.dp))
+                        .clip(RoundedCornerShape(8.dp))
                         .background(chipActiveBg)
-                        .border(1.dp, borderColor, RoundedCornerShape(3.dp))
+                        .border(1.dp, borderColor, RoundedCornerShape(8.dp))
                         .padding(horizontal = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -385,7 +385,7 @@ private fun RadioDeck(
                 onClick = onRadioSeekDown
             )
             RadioFlatButton(
-                label = "OPEN", enabled = true, active = false,
+                label = "打开", enabled = true, active = false,
                 accent = accent, borderColor = borderColor, dimColor = dimColor,
                 modifier = Modifier.weight(1f),
                 onClick = onLaunchHardwareRadio
@@ -440,8 +440,8 @@ private fun RadioDeck(
                         modifier = Modifier
                             .weight(1f)
                             .height(28.dp)
-                            .border(1.dp, presetBorderColor, RoundedCornerShape(2.dp))
-                            .clip(RoundedCornerShape(2.dp))
+                            .border(1.dp, presetBorderColor, RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(8.dp))
                             .background(presetBg)
                             .combinedClickable(
                                 enabled = powerOn,
@@ -489,8 +489,8 @@ private fun RadioFlatButton(
     Box(
         modifier = modifier
             .height(28.dp)
-            .border(1.dp, if (active) accent else borderColor, RoundedCornerShape(3.dp))
-            .clip(RoundedCornerShape(3.dp))
+            .border(1.dp, if (active) accent else borderColor, RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(8.dp))
             .background(if (active) accent.copy(alpha = 0.15f) else Color.Transparent)
             .clickable(enabled = enabled) { onClick() },
         contentAlignment = Alignment.Center

@@ -226,7 +226,7 @@ fun OnboardingScreen(
                     if (currentStep > 0) {
                         TextButton(
                             onClick = { currentStep-- },
-                            shape = RoundedCornerShape(4.dp),
+                            shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.height(44.dp)
                         ) {
                             Icon(Icons.Default.ArrowBack, null, tint = Color(0xFF888888), modifier = Modifier.size(16.dp))
@@ -265,7 +265,7 @@ fun OnboardingScreen(
                                     onComplete()
                                 }
                             },
-                            shape = RoundedCornerShape(4.dp),
+                            shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = accent),
                             modifier = Modifier.height(44.dp)
                         ) {
@@ -278,7 +278,7 @@ fun OnboardingScreen(
                             onClick = {
                                 currentStep++
                             },
-                            shape = RoundedCornerShape(4.dp),
+                            shape = RoundedCornerShape(10.dp),
                             border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = 0.5f)),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                             modifier = Modifier.height(44.dp)
@@ -318,7 +318,7 @@ private fun StepItem(stepIndex: Int, title: String, currentStep: Int) {
             Box(
                 modifier = Modifier
                     .size(6.dp)
-                    .clip(RoundedCornerShape(3.dp))
+                    .clip(RoundedCornerShape(8.dp))
                     .background(tint)
             )
         }
@@ -383,7 +383,7 @@ private fun LocationStep(accent: Color, isGranted: Boolean, onGrant: () -> Unit)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(4.dp))
+                .clip(RoundedCornerShape(10.dp))
                 .background(if (isGranted) Color(0xFF0F1E10) else Color(0xFF1E1010))
                 .padding(16.dp)
         ) {
@@ -417,7 +417,7 @@ private fun LocationStep(accent: Color, isGranted: Boolean, onGrant: () -> Unit)
             Spacer(Modifier.height(16.dp))
             Button(
                 onClick = onGrant,
-                shape = RoundedCornerShape(4.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = accent),
                 modifier = Modifier.height(44.dp)
             ) {
@@ -433,7 +433,7 @@ private fun LocationStep(accent: Color, isGranted: Boolean, onGrant: () -> Unit)
 private fun MediaStep(accent: Color, isGranted: Boolean, onGrant: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
-            text = "MEDIA INTEGRATION",
+            text = "媒体集成",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = accent,
@@ -452,7 +452,7 @@ private fun MediaStep(accent: Color, isGranted: Boolean, onGrant: () -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(4.dp))
+                .clip(RoundedCornerShape(10.dp))
                 .background(if (isGranted) Color(0xFF0F1E10) else Color(0xFF1E1010))
                 .padding(16.dp)
         ) {
@@ -486,7 +486,7 @@ private fun MediaStep(accent: Color, isGranted: Boolean, onGrant: () -> Unit) {
             Spacer(Modifier.height(16.dp))
             Button(
                 onClick = onGrant,
-                shape = RoundedCornerShape(4.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = accent),
                 modifier = Modifier.height(44.dp)
             ) {
@@ -520,7 +520,7 @@ private fun FinalStep(accent: Color, onSetDefault: () -> Unit) {
 
         Button(
             onClick = onSetDefault,
-            shape = RoundedCornerShape(4.dp),
+            shape = RoundedCornerShape(10.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E1E1E)),
             modifier = Modifier.height(44.dp)
         ) {

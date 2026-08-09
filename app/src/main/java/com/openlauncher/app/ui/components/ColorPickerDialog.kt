@@ -57,7 +57,7 @@ fun ColorPickerDialog(
         text  = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 // Preset swatches
-                Text("Presets", style = MaterialTheme.typography.labelMedium, color = Color(0xFF888888))
+                Text("预设", style = MaterialTheme.typography.labelMedium, color = Color(0xFF888888))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     accentPresets.forEachIndexed { i, color ->
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -82,17 +82,17 @@ fun ColorPickerDialog(
                 Divider(color = Color(0xFF2A2A2A))
 
                 // Custom HSV sliders
-                Text("Custom", style = MaterialTheme.typography.labelMedium, color = Color(0xFF888888))
+                Text("自定义", style = MaterialTheme.typography.labelMedium, color = Color(0xFF888888))
 
                 // Hue slider
-                Text("Hue", style = MaterialTheme.typography.labelSmall, color = Color(0xFF666666))
+                Text("色相", style = MaterialTheme.typography.labelSmall, color = Color(0xFF666666))
                 Slider(
                     value = hue / 360f,
                     onValueChange = { hue = it * 360f; rebuildColor() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(24.dp)
-                        .clip(RoundedCornerShape(4.dp))
+                        .clip(RoundedCornerShape(10.dp))
                         .background(Brush.horizontalGradient(
                             colors = (0..6).map { i ->
                                 Color(android.graphics.Color.HSVToColor(floatArrayOf(i * 60f, 1f, 1f)))
@@ -106,14 +106,14 @@ fun ColorPickerDialog(
                 )
 
                 // Saturation slider
-                Text("Saturation", style = MaterialTheme.typography.labelSmall, color = Color(0xFF666666))
+                Text("饱和度", style = MaterialTheme.typography.labelSmall, color = Color(0xFF666666))
                 Slider(
                     value = sat,
                     onValueChange = { sat = it; rebuildColor() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(24.dp)
-                        .clip(RoundedCornerShape(4.dp))
+                        .clip(RoundedCornerShape(10.dp))
                         .background(Brush.horizontalGradient(listOf(
                             Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, 0f, value))),
                             Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, 1f, value)))
@@ -126,14 +126,14 @@ fun ColorPickerDialog(
                 )
 
                 // Brightness slider
-                Text("Brightness", style = MaterialTheme.typography.labelSmall, color = Color(0xFF666666))
+                Text("亮度", style = MaterialTheme.typography.labelSmall, color = Color(0xFF666666))
                 Slider(
                     value = value,
                     onValueChange = { value = it; rebuildColor() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(24.dp)
-                        .clip(RoundedCornerShape(4.dp))
+                        .clip(RoundedCornerShape(10.dp))
                         .background(Brush.horizontalGradient(listOf(
                             Color.Black,
                             Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, sat, 1f)))
@@ -165,11 +165,11 @@ fun ColorPickerDialog(
                     contentColor   = if (selectedColor.luminance() > 0.5f) Color.Black else Color.White
                 )
             ) {
-                Text("Apply")
+                Text("应用")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = Color(0xFFAAAAAA)) }
+            TextButton(onClick = onDismiss) { Text("取消", color = Color(0xFFAAAAAA)) }
         }
     )
 }

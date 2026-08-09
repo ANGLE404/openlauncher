@@ -160,7 +160,7 @@ fun TelemetryWidget(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text          = "LATITUDE",
+                    text          = "纬度",
                     style         = MaterialTheme.typography.labelSmall,
                     color         = subColor,
                     letterSpacing = 1.sp,
@@ -177,7 +177,7 @@ fun TelemetryWidget(
                 horizontalAlignment = Alignment.End
             ) {
                 Text(
-                    text          = "LONGITUDE",
+                    text          = "经度",
                     style         = MaterialTheme.typography.labelSmall,
                     color         = subColor,
                     letterSpacing = 1.sp,

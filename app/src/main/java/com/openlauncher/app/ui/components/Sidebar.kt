@@ -380,9 +380,9 @@ private fun ShortcutActionDialog(
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(4.dp))
+                .clip(RoundedCornerShape(10.dp))
                 .background(Color(0xFF111111))
-                .border(1.dp, Color(0xFF1E1E1E), RoundedCornerShape(4.dp))
+                .border(1.dp, Color(0xFF1E1E1E), RoundedCornerShape(10.dp))
                 .padding(vertical = 4.dp)
                 .width(180.dp)
         ) {
@@ -423,9 +423,9 @@ private fun IconPickerDialog(
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(4.dp))
+                .clip(RoundedCornerShape(10.dp))
                 .background(Color(0xFF111111))
-                .border(1.dp, Color(0xFF1E1E1E), RoundedCornerShape(4.dp))
+                .border(1.dp, Color(0xFF1E1E1E), RoundedCornerShape(10.dp))
                 .padding(12.dp)
         ) {
             Text(
@@ -440,7 +440,7 @@ private fun IconPickerDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(4.dp))
+                        .clip(RoundedCornerShape(10.dp))
                         .background(if (currentOverride == null) accent.copy(alpha = 0.15f) else Color.Transparent)
                         .clickable { onPick(null) }
                         .padding(horizontal = 12.dp, vertical = 10.dp),
@@ -470,7 +470,7 @@ private fun IconPickerDialog(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .aspectRatio(1f)
-                            .clip(RoundedCornerShape(4.dp))
+                            .clip(RoundedCornerShape(10.dp))
                             .background(if (isSelected) accent.copy(alpha = 0.18f) else Color(0xFF1A1A1A))
                             .clickable { onPick(iconOption) }
                     ) {

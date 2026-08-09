@@ -186,9 +186,9 @@ fun TripTrackerWidget(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .clip(RoundedCornerShape(6.dp))
+                .clip(RoundedCornerShape(12.dp))
                 .background(lcdBg)
-                .border(1.dp, lcdBorder, RoundedCornerShape(6.dp))
+                .border(1.dp, lcdBorder, RoundedCornerShape(12.dp))
                 .drawBehind {
                     val dotColor = displayColor.copy(alpha = 0.02f)
                     val dotSize = 1.dp.toPx()
@@ -393,7 +393,7 @@ fun TripTrackerWidget(
                             )
                         }
                         Text(
-                            text = "SEC",
+                            text = "秒",
                             color = displayColor,
                             fontSize = 9.sp,
                             fontFamily = FontFamily.Monospace,
@@ -439,7 +439,7 @@ fun TripTrackerWidget(
                 ) {
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "SPEED // TARGET %d".format(targetSpeed.toInt()),
+                            text = "速度 // 目标 %d".format(targetSpeed.toInt()),
                             color = labelColor,
                             fontSize = 6.5.sp,
                             fontFamily = FontFamily.Monospace,
@@ -508,7 +508,7 @@ fun TripTrackerWidget(
             // Button 1: OPR / RUN styled as a flat dynamic circular cap
             val oprActive = if (activeMode == "0-100") (accelState == "RUNNING" || isSimulating) else isRunning
             TeTactileButton(
-                label = "OPR",
+                label = "开始",
                 keyColor = activeAccent,
                 active = oprActive,
                 onClick = {
@@ -531,7 +531,7 @@ fun TripTrackerWidget(
                 !isRunning && (driveTimeSeconds > 0 || idleTimeSeconds > 0)
             }
             TeTactileButton(
-                label = "RST",
+                label = "重置",
                 keyColor = teRed,
                 active = false,
                 enabled = canReset,
@@ -555,7 +555,7 @@ fun TripTrackerWidget(
 
             // Button 3: EXTRAS (Toggles between TRIP info and 0-100 Accel Run)
             TeTactileButton(
-                label = "EXT",
+                label = "退出",
                 keyColor = activeAccent,
                 active = activeMode == "0-100",
                 enabled = true,
@@ -567,7 +567,7 @@ fun TripTrackerWidget(
 
             // Button 4: SET
             TeTactileButton(
-                label = "SET",
+                label = "设置",
                 keyColor = teGrey,
                 active = false,
                 enabled = false,

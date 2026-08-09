@@ -83,9 +83,9 @@ fun SoundboardWidget(
                             .border(
                                 1.dp,
                                 if (isActive) accent else borderColor,
-                                RoundedCornerShape(3.dp)
+                                RoundedCornerShape(8.dp)
                             )
-                            .clip(RoundedCornerShape(3.dp))
+                            .clip(RoundedCornerShape(8.dp))
                             .background(if (isActive) accent.copy(alpha = 0.12f) else Color.Transparent)
                             .then(
                                 if (!isEditing) Modifier.combinedClickable(
@@ -175,9 +175,9 @@ private fun PadAssignDialog(
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(6.dp))
+                .clip(RoundedCornerShape(12.dp))
                 .background(menuBg)
-                .border(1.dp, menuBorder, RoundedCornerShape(6.dp))
+                .border(1.dp, menuBorder, RoundedCornerShape(12.dp))
                 .padding(18.dp)
                 .width(340.dp), // Fixed size: increased from 220dp to 340dp for landscape headunit displays
             verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -206,7 +206,7 @@ private fun PadAssignDialog(
                     cursorBrush = SolidColor(accent),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, fieldBorder, RoundedCornerShape(2.dp))
+                        .border(1.dp, fieldBorder, RoundedCornerShape(8.dp))
                         .padding(horizontal = 8.dp, vertical = 6.dp)
                 )
             }
@@ -230,8 +230,8 @@ private fun PadAssignDialog(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(28.dp)
-                                .border(1.dp, if (active) accent else fieldBorder, RoundedCornerShape(3.dp))
-                                .clip(RoundedCornerShape(3.dp))
+                                .border(1.dp, if (active) accent else fieldBorder, RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(8.dp))
                                 .background(if (active) accent.copy(alpha = 0.12f) else Color.Transparent)
                                 .clickable { 
                                     synthType = type
@@ -262,7 +262,7 @@ private fun PadAssignDialog(
                     OutlinedButton(
                         onClick = { filePicker.launch(arrayOf("audio/*")) },
                         modifier = Modifier.weight(1f).height(30.dp),
-                        shape = RoundedCornerShape(2.dp),
+                        shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = accent),
                         border = androidx.compose.foundation.BorderStroke(1.dp, if (audioUri.isNotEmpty()) accent else fieldBorder),
                         contentPadding = PaddingValues(horizontal = 8.dp)
@@ -308,7 +308,7 @@ private fun PadAssignDialog(
                         ))
                     },
                     modifier = Modifier.fillMaxWidth().height(32.dp),
-                    shape = RoundedCornerShape(2.dp),
+                    shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF884444)),
                     border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF884444)),
                     contentPadding = PaddingValues(0.dp)
@@ -325,7 +325,7 @@ private fun PadAssignDialog(
                 OutlinedButton(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f).height(32.dp),
-                    shape = RoundedCornerShape(2.dp),
+                    shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = dimColor),
                     border = androidx.compose.foundation.BorderStroke(1.dp, fieldBorder),
                     contentPadding = PaddingValues(0.dp)
@@ -341,7 +341,7 @@ private fun PadAssignDialog(
                         ))
                     },
                     modifier = Modifier.weight(1f).height(32.dp),
-                    shape = RoundedCornerShape(2.dp),
+                    shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = accent),
                     contentPadding = PaddingValues(0.dp)
                 ) {

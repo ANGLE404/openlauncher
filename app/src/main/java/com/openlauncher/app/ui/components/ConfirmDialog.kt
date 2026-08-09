@@ -23,7 +23,7 @@ fun ConfirmDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = Color(0xFFAAAAAA))
+                Text("取消", color = Color(0xFFAAAAAA))
             }
         },
         // The dialog surface is always dark, so pin light content colors —

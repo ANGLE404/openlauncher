@@ -62,7 +62,7 @@
 
 当前测试版 APK：
 
-[下载 openlauncher-zh-ayc404.apk](release/openlauncher-zh-ayc404.apk)
+[下载 openlauncher-zh-ayc404-rounded.apk](release/openlauncher-zh-ayc404-rounded.apk)
 
 该 APK 使用测试签名，适合个人安装和验证。后续升级需要继续使用相同签名。
 

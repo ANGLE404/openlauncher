@@ -32,7 +32,7 @@ import com.openlauncher.app.ui.theme.LocalDayMode
 
 private enum class AppFilter { USER, SYSTEM, ALL }
 
-private val TILE_RADIUS = RoundedCornerShape(4.dp)
+private val TILE_RADIUS = RoundedCornerShape(10.dp)
 
 @Composable
 fun AppLibraryScreen(
@@ -126,8 +126,8 @@ fun AppLibraryScreen(
                 modifier = Modifier
                     .width(200.dp)
                     .height(36.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .border(1.dp, if (searchFocused) accent else fieldBorderU, RoundedCornerShape(4.dp))
+                    .clip(RoundedCornerShape(10.dp))
+                    .border(1.dp, if (searchFocused) accent else fieldBorderU, RoundedCornerShape(10.dp))
                     .padding(horizontal = 10.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -143,7 +143,7 @@ fun AppLibraryScreen(
                             .onFocusChanged { searchFocused = it.isFocused },
                         decorationBox = { inner ->
                             Box {
-                                if (query.isEmpty()) Text("Search…", color = placeholderC, fontSize = 13.sp)
+                                if (query.isEmpty()) Text("搜索…", color = placeholderC, fontSize = 13.sp)
                                 inner()
                             }
                         }

@@ -89,7 +89,7 @@ fun SettingsScreen(
     ) {
         // ── Title ────────────────────────────────────────────────────────────
         Text(
-            text          = "SETTINGS",
+            text          = "设置",
             style         = MaterialTheme.typography.titleLarge,
             color         = if (isDayMode) Color(0xFF111111) else accent,
             letterSpacing = 3.sp,
@@ -346,7 +346,7 @@ fun SettingsScreen(
             settings.shortcuts.forEachIndexed { index, shortcut ->
                 if (index > 0) SettingsDivider()
                 SettingsRow(
-                    label    = "Slot ${index + 1}",
+                    label    = "插槽 ${index + 1}",
                     sublabel = when {
                         shortcut.label.isNotEmpty()       -> shortcut.label
                         shortcut.packageName.isNotEmpty() -> shortcut.packageName
@@ -445,7 +445,7 @@ fun SettingsScreen(
 
             // Background color + gradient
             SettingsRow(
-                label    = "Background",
+                label    = "背景",
                 sublabel = if (settings.useGradient) "Gradient" else "纯色",
                 icon     = Icons.Default.FormatColorFill
             ) {
@@ -457,7 +457,7 @@ fun SettingsScreen(
                     Box(
                         modifier = Modifier
                             .size(28.dp)
-                            .clip(RoundedCornerShape(4.dp))
+                            .clip(RoundedCornerShape(10.dp))
                             .background(Color(settings.backgroundColor))
                             .clickable { showBgPicker = true }
                     )
@@ -470,7 +470,7 @@ fun SettingsScreen(
                         Box(
                             modifier = Modifier
                                 .size(28.dp)
-                                .clip(RoundedCornerShape(4.dp))
+                                .clip(RoundedCornerShape(10.dp))
                                 .background(Color(settings.gradientEndColor))
                                 .clickable { showGradientEndPicker = true }
                         )
@@ -489,7 +489,7 @@ fun SettingsScreen(
                             contentPadding = PaddingValues(horizontal = 6.dp),
                             modifier = Modifier.height(28.dp)
                         ) {
-                            Text("DEFAULT", color = accent, fontSize = 9.sp, letterSpacing = 1.sp)
+                            Text("默认", color = accent, fontSize = 9.sp, letterSpacing = 1.sp)
                         }
                     }
                 }
@@ -632,7 +632,7 @@ fun SettingsScreen(
 
         // ── Typography ───────────────────────────────────────────────────────
         SettingsSection("字体") {
-            SettingsRow(label = "Font", sublabel = fontDisplayName(settings.appFont), icon = Icons.Default.FontDownload) {
+            SettingsRow(label = "字体", sublabel = fontDisplayName(settings.appFont), icon = Icons.Default.FontDownload) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     com.openlauncher.app.data.AppFont.entries.forEach { font ->
                         FilterChip(
@@ -767,7 +767,7 @@ fun SettingsScreen(
             Column(modifier = Modifier.padding(bottom = 8.dp)) {
                 SettingsRow(
                     label    = "指南针航向偏移",
-                    sublabel = "Manual Alignment: ${if (settings.compassOffset >= 0) "+" else ""}${settings.compassOffset.toInt()}°  — aligns compass with vehicle front",
+                    sublabel = "手动校准：${if (settings.compassOffset >= 0) "+" else ""}${settings.compassOffset.toInt()}°  — 与车头方向对齐",
                     icon     = Icons.Default.Explore
                 ) {}
                 Slider(
@@ -800,7 +800,7 @@ fun SettingsScreen(
             Spacer(Modifier.height(8.dp))
             Button(
                 onClick  = { showResetDialog = true },
-                shape    = RoundedCornerShape(4.dp),
+                shape    = RoundedCornerShape(10.dp),
                 colors   = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A0000)),
                 modifier = Modifier.fillMaxWidth().height(44.dp)
             ) {

@@ -179,7 +179,7 @@ fun VitalsWidget(
             ) {
                 BarGauge(
                     value = cpuUsage,
-                    label = "CPU",
+                    label = "处理器",
                     displayValue = "%.0f%%".format(cpuUsage),
                     activeColor = cpuColor,
                     isDayMode = isDayMode,
@@ -187,7 +187,7 @@ fun VitalsWidget(
                 )
                 BarGauge(
                     value = ramUsedPercent,
-                    label = "RAM",
+                    label = "内存",
                     displayValue = ramDisplayGb,
                     activeColor = ramColor,
                     isDayMode = isDayMode,
@@ -195,7 +195,7 @@ fun VitalsWidget(
                 )
                 BarGauge(
                     value = temperature,
-                    label = "TEMP",
+                    label = "温度",
                     displayValue = "%.0f°".format(temperature),
                     activeColor = tempColor,
                     isDayMode = isDayMode,
@@ -210,7 +210,7 @@ fun VitalsWidget(
             ) {
                 DialGauge(
                     value = cpuUsage,
-                    label = "CPU",
+                    label = "处理器",
                     displayValue = "%.0f%%".format(cpuUsage),
                     activeColor = cpuColor,
                     isDayMode = isDayMode,
@@ -219,7 +219,7 @@ fun VitalsWidget(
 
                 DialGauge(
                     value = ramUsedPercent,
-                    label = "RAM",
+                    label = "内存",
                     displayValue = ramDisplayGb,
                     activeColor = ramColor,
                     isDayMode = isDayMode,
@@ -228,7 +228,7 @@ fun VitalsWidget(
 
                 DialGauge(
                     value = temperature,
-                    label = "TEMP",
+                    label = "温度",
                     displayValue = "%.0f°".format(temperature),
                     activeColor = tempColor,
                     isDayMode = isDayMode,
@@ -276,12 +276,12 @@ private fun BarGauge(
             )
         }
         Spacer(Modifier.height(3.dp))
-        val barBorder = if (isDayMode) Modifier.border(0.5.dp, Color.Black.copy(alpha = 0.08f), RoundedCornerShape(2.dp)) else Modifier
+        val barBorder = if (isDayMode) Modifier.border(0.5.dp, Color.Black.copy(alpha = 0.08f), RoundedCornerShape(8.dp)) else Modifier
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(4.dp)
-                .clip(RoundedCornerShape(2.dp))
+                .clip(RoundedCornerShape(8.dp))
                 .background(trackColor)
                 .then(barBorder)
         ) {

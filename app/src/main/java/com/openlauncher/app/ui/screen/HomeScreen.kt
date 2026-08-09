@@ -46,7 +46,7 @@ import com.openlauncher.app.ui.widget.*
 import java.util.Calendar
 import com.openlauncher.app.util.LocationData
 
-private val WIDGET_RADIUS = RoundedCornerShape(0.dp)
+private val WIDGET_RADIUS = RoundedCornerShape(14.dp)
 
 private data class WidgetTypeInfo(
     val id: String,
@@ -56,15 +56,15 @@ private data class WidgetTypeInfo(
 )
 
 private val ALL_WIDGET_TYPES = listOf(
-    WidgetTypeInfo("CLOCK",       "CLOCK",       Icons.Default.AccessTime,  "时间与日期"),
-    WidgetTypeInfo("WEATHER",     "WEATHER",     Icons.Default.Cloud,       "当前天气"),
+    WidgetTypeInfo("CLOCK",       "时钟",         Icons.Default.AccessTime,  "时间与日期"),
+    WidgetTypeInfo("WEATHER",     "天气",         Icons.Default.Cloud,       "当前天气"),
     WidgetTypeInfo("NOW_PLAYING", "正在播放", Icons.Default.MusicNote,   "媒体控制"),
-    WidgetTypeInfo("TELEMETRY",   "COMPASS",     Icons.Default.Explore,     "速度与航向"),
-    WidgetTypeInfo("ALTIMETER",   "ALTIMETER",   Icons.Default.FlightTakeoff, "横滚、俯仰与高度"),
-    WidgetTypeInfo("SPEEDOMETER", "SPEED",       Icons.Default.Speed,         "GPS 速度"),
-    WidgetTypeInfo("VITALS",      "VITALS",      Icons.Default.Dns,           "车机健康状态"),
+    WidgetTypeInfo("TELEMETRY",   "指南针",       Icons.Default.Explore,     "速度与航向"),
+    WidgetTypeInfo("ALTIMETER",   "高度计",       Icons.Default.FlightTakeoff, "横滚、俯仰与高度"),
+    WidgetTypeInfo("SPEEDOMETER", "速度表",       Icons.Default.Speed,         "GPS 速度"),
+    WidgetTypeInfo("VITALS",      "车况",         Icons.Default.Dns,           "车机健康状态"),
     WidgetTypeInfo("TRIP_TRACKER", "行程追踪", Icons.Default.Map,          "行程记录与统计"),
-    WidgetTypeInfo("SOUNDBOARD",  "SOUNDBOARD",  Icons.Default.Piano,         "自定义音效按钮")
+    WidgetTypeInfo("SOUNDBOARD",  "音效板",       Icons.Default.Piano,         "自定义音效按钮")
 )
 
 private fun canAddWidget(settings: com.openlauncher.app.data.AppSettings): Boolean {
@@ -194,7 +194,7 @@ fun HomeScreen(
                     ) {
                         Icon(
                             imageVector        = Icons.Default.Dashboard,
-                            contentDescription = "Widget library",
+                            contentDescription = "组件库",
                             tint               = controlIconColor,
                             modifier           = Modifier.size(15.dp)
                         )
@@ -311,13 +311,13 @@ fun HomeScreen(
 
                 val label = when (w.id) {
                     "CLOCK"       -> clockTimeLabel(Calendar.getInstance())
-                    "WEATHER"     -> "WEATHER"
+                    "WEATHER"     -> "天气"
                     "NOW_PLAYING" -> "正在播放"
-                    "TELEMETRY"   -> "COMPASS"
-                    "ALTIMETER"   -> "ALTIMETER"
-                    "SPEEDOMETER" -> "SPEED"
+                    "TELEMETRY"   -> "指南针"
+                    "ALTIMETER"   -> "高度计"
+                    "SPEEDOMETER" -> "速度"
                     "TRIP_TRACKER" -> "TRIP"
-                    "SOUNDBOARD"  -> "SOUND"
+                    "SOUNDBOARD"  -> "音效"
                     else          -> w.id
                 }
 
@@ -583,9 +583,9 @@ private fun WidgetContextMenu(
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(4.dp))
+                .clip(RoundedCornerShape(10.dp))
                 .background(menuBg)
-                .border(1.dp, menuBorder, RoundedCornerShape(4.dp))
+                .border(1.dp, menuBorder, RoundedCornerShape(10.dp))
                 .padding(vertical = 4.dp)
                 .width(200.dp)
         ) {
@@ -594,7 +594,7 @@ private fun WidgetContextMenu(
             if (widgetId == "CLOCK") {
                 HorizontalDivider(color = menuDivider)
                 ContextRow(
-                    label   = "DIGITAL",
+                    label   = "数字",
                     icon    = Icons.Default.Schedule,
                     tint    = if (clockStyle == ClockStyle.DIGITAL) accent else inactiveMenuTint,
                     onClick = { onSetClockStyle(ClockStyle.DIGITAL); onDismiss() },
@@ -602,7 +602,7 @@ private fun WidgetContextMenu(
                 )
                 HorizontalDivider(color = menuDivider)
                 ContextRow(
-                    label   = "ANALOG",
+                    label   = "指针",
                     icon    = Icons.Default.Watch,
                     tint    = if (clockStyle == ClockStyle.ANALOG) accent else inactiveMenuTint,
                     onClick = { onSetClockStyle(ClockStyle.ANALOG); onDismiss() },
@@ -725,8 +725,8 @@ private fun WidgetResizeDialog(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                SpanRow(label = "WIDTH",  value = spanX, min = 1, max = maxSpanX, accent = accent, isDayMode = isDayMode) { spanX = it }
-                SpanRow(label = "HEIGHT", value = spanY, min = 1, max = maxSpanY, accent = accent, isDayMode = isDayMode) { spanY = it }
+                SpanRow(label = "宽度",  value = spanX, min = 1, max = maxSpanX, accent = accent, isDayMode = isDayMode) { spanX = it }
+                SpanRow(label = "高度", value = spanY, min = 1, max = maxSpanY, accent = accent, isDayMode = isDayMode) { spanY = it }
             }
         },
         confirmButton = {
@@ -805,7 +805,7 @@ private fun SpanRow(
                         .size(width = 14.dp, height = 10.dp)
                         .background(
                             if (i < value) accent.copy(alpha = 0.7f) else inactiveBg,
-                            RoundedCornerShape(1.dp)
+                            RoundedCornerShape(8.dp)
                         )
                 )
             }
@@ -845,9 +845,9 @@ private fun WidgetLibraryDialog(
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(4.dp))
+                .clip(RoundedCornerShape(10.dp))
                 .background(dialogBg)
-                .border(1.dp, dialogBorder, RoundedCornerShape(4.dp))
+                .border(1.dp, dialogBorder, RoundedCornerShape(10.dp))
                 .padding(16.dp)
                 .widthIn(min = 320.dp, max = 520.dp)
         ) {
@@ -920,9 +920,9 @@ private fun WidgetLibraryCard(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .clip(RoundedCornerShape(4.dp))
+            .clip(RoundedCornerShape(10.dp))
             .background(cardBg)
-            .border(1.dp, cardBorder, RoundedCornerShape(4.dp))
+            .border(1.dp, cardBorder, RoundedCornerShape(10.dp))
             .clickable(enabled = enabled, onClick = onToggle)
             .padding(6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

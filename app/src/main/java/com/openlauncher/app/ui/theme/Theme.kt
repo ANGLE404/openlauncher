@@ -62,6 +62,7 @@ fun OpenLauncherTheme(
         MaterialTheme(
             colorScheme = colorScheme,
             typography  = launcherTypography(fontBold, textScale, appFont.toFontFamily()),
+            shapes      = LauncherShapes,
             content     = content
         )
     }
